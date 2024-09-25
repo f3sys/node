@@ -1,0 +1,30 @@
+{
+  "name": "node",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "barcode-detector": "^2.2.8",
+    "lucide-vue-next": "^0.445.0",
+    "pinia": "^2.2.2",
+    "pinia-plugin-persistedstate": "^4.0.2",
+    "sqids": "^0.3.0",
+    "vue": "^3.4.37",
+    "vue-qrcode-reader": "^5.5.10",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@unocss/preset-mini": "^0.62.4",
+    "@vitejs/plugin-vue": "^5.1.2",
+    "typescript": "^5.5.3",
+    "unocss": "^0.62.4",
+    "vite": "^5.4.1",
+    "vue-tsc": "^2.0.29"
+  },
+  "packageManager": "pnpm@9.11.0+sha512.0a203ffaed5a3f63242cd064c8fb5892366c103e328079318f78062f24ea8c9d50bc6a47aa3567cabefd824d170e78fa2745ed1f16b132e16436146b7688f19b"
+}
