@@ -18,6 +18,7 @@ const isF3SiDScanned = ref(false)
 const newId = ref(0)
 const newFoodId = ref(0)
 const newQuantity = ref(1)
+const editIsLoading = ref(false)
 
 const f3sid = ref("")
 
@@ -61,7 +62,7 @@ const onClickScan = (() => {
 })
 const onClickSave = (async (id: number) => {
     console.log(newId.value, newFoodId.value, newQuantity.value);
-    editingFoods.value.set(id, false);
+    editIsLoading.value = true;
 
     const updateFoodResult = await foodStore.updateFood(newId.value, newFoodId.value, newQuantity.value);
     if (updateFoodResult) {
@@ -72,7 +73,8 @@ const onClickSave = (async (id: number) => {
         ]);
 
         if (tableFoodResult) {
-            console.log("Table updated");
+            editIsLoading.value = false;
+            editingFoods.value.set(id, false);
         }
     }
 })
@@ -225,13 +227,22 @@ const onSubmit = async () => {
                         <thead>
                             <tr>
                                 <th scope="col">Name</th>
-                                <th scope="col">Quantity</th>
                                 <th scope="col">Price</th>
+                                <th scope="col">Quantity</th>
+                                <th scope="col">Total Price</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="food in foodStore.foods_count">
                                 <th scope="row">{{ food.name }}</th>
+                                <td>
+                                    {{
+                                        foodStore.foods.find(f => f.id === food.id)?.price.toLocaleString("ja-JP",
+                                            {
+                                                style: "currency", currency: "JPY"
+                                            })
+                                    }}
+                                </td>
                                 <td>
                                     {{ food.count }}
                                 </td>
@@ -248,7 +259,7 @@ const onSubmit = async () => {
                         </tbody>
                         <tfoot>
                             <tr>
-                                <th scope="row">Sum</th>
+                                <th scope="row" colspan="2" class="text-align-center">Total</th>
                                 <td>
                                     {{
                                         foodStore.foods_count.reduce((acc, food) => acc + food.count, 0)
@@ -291,7 +302,8 @@ const onSubmit = async () => {
                             <tr v-for="food in foodStore.foods_table">
                                 <th scope="row">{{ food.f3sid }}</th>
                                 <td v-if="editingFoods.get(food.id)">
-                                    <select name="newFoodId" v-model="newFoodId" class="!mb-0 !py-0 !h-8" required>
+                                    <select :disabled="editIsLoading" name="newFoodId" v-model="newFoodId"
+                                        class="!mb-0 !py-0 !h-8" required>
                                         <option v-for="foodStoreFood in foodStore.foods" :value="foodStoreFood.id"
                                             :key="foodStoreFood.id">
                                             {{ foodStoreFood.name }}
@@ -300,7 +312,8 @@ const onSubmit = async () => {
                                 </td>
                                 <td v-else>{{ food.food_name }}</td>
                                 <td v-if="editingFoods.get(food.id)">
-                                    <input type="number" v-model="newQuantity" class="!mb-0 !py-0 !h-8 !w-24" />
+                                    <input type="number" v-model="newQuantity" class="!mb-0 !py-0 !h-8 !w-24"
+                                        :disabled="editIsLoading" />
                                 </td>
                                 <td v-else>{{ food.quantity }}</td>
                                 <td>{{ food.price }}</td>
@@ -308,14 +321,16 @@ const onSubmit = async () => {
                                 <td>
                                     <div class="flex">
                                         <button v-if="editingFoods.get(food.id)" @click="onClickCancel(food.id)"
+                                            :disabled="editIsLoading"
                                             class="flex items-center justify-center size-8 p-0 mr-auto outline secondary">
                                             <X class="m-1 size-5" />
                                         </button>
                                         <button v-if="editingFoods.get(food.id)" @click="onClickSave(food.id)"
+                                            :disabled="editIsLoading"
                                             class="flex items-center justify-center size-8 p-0 outline">
                                             <Check class="m-1 size-5" />
                                         </button>
-                                        <button v-else @click="onClickEdit(food)"
+                                        <button v-else @click="onClickEdit(food)" :disabled="editIsLoading"
                                             class="flex items-center justify-center size-8 p-0 mx-auto outline contrast">
                                             <Pencil class="m-2 size-3" />
                                         </button>

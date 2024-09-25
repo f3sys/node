@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useEntryStore } from '../stores/entry';
+import { useExhibitionStore } from '../stores/exhibition';
 import { useFoodStore } from '../stores/food';
 import { useNodeStore } from '../stores/node';
 
 const nodeStore = useNodeStore();
 const foodStore = useFoodStore();
+const exhibitionStore = useExhibitionStore();
+const entryStore = useEntryStore();
 
 const loading = ref(false);
 const buttonValue = ref("Submit");
@@ -21,22 +25,33 @@ async function onSubmit() {
     switch (nodeStore.type) {
         case "FOODSTALL":
             foodStore.clear();
-            const [tableFoodResult] = await Promise.all([
+            await Promise.all([
                 foodStore.getFoods(),
                 foodStore.getTable(),
                 foodStore.getCount(),
                 foodStore.getFoodCount()
             ]);
 
-            if (tableFoodResult) {
-                window.location.reload();
-            } else {
-                window.location.reload()
-            }
+            window.location.reload()
             break;
         case "EXHIBITION":
+            exhibitionStore.clear();
+            await Promise.all([
+                exhibitionStore.getTable(),
+                exhibitionStore.getCount(),
+            ]);
+
+            window.location.reload()
             break;
         case "ENTRY":
+            entryStore.clear();
+            await Promise.all([
+                entryStore.getTable(),
+                entryStore.getCount(),
+                entryStore.getEntryCount()
+            ]);
+
+            window.location.reload()
             break;
         default:
             break;
