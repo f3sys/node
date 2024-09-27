@@ -26,7 +26,7 @@ const sqids = new Sqids({
 })
 
 const onDetect = async ([firstDetectedCode]: DetectedBarcode[]) => {
-    if (sqids.decode(f3sid.value).length !== 2) return;
+    if (sqids.decode(firstDetectedCode.rawValue).length !== 2) return;
     f3sid.value = firstDetectedCode.rawValue;
     isF3SiDScanned.value = true;
     isScannerVisible.value = false;

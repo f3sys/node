@@ -11,37 +11,64 @@ const exhibitionStore = useExhibitionStore();
 const entryStore = useEntryStore();
 
 const loading = ref(false);
-const buttonValue = ref("Submit");
+const buttonValue = ref("Login");
 
 function toggleButton() {
-    buttonValue.value = buttonValue.value === "Submit" ? "Loading..." : "Submit";
+    buttonValue.value = buttonValue.value === "Login" ? "Loading..." : "Login";
     loading.value = !loading.value;
 }
 
 async function onSubmit() {
     toggleButton()
-    if (nodeStore.key === "") await nodeStore.setKey();
+    if (nodeStore.key === "")
+        await nodeStore.setKey();
+    if (nodeStore.key === "")
+        return;
     await nodeStore.getNode();
     switch (nodeStore.type) {
         case "FOODSTALL":
+            // switch (nodeStore.isReview) {
+            //     case true:
+            //         foodStore.clear();
+            //         await Promise.all([
+            //             foodStore.getFoods(),
+            //             foodStore.getTable(),
+            //             foodStore.getFoodCount(),
+            //             foodStore.getData()
+            //         ]);
+
+            //         window.location.reload()
+            //         break;
+            //     case false:
             foodStore.clear();
             await Promise.all([
                 foodStore.getFoods(),
                 foodStore.getTable(),
-                foodStore.getCount(),
-                foodStore.getFoodCount()
+                foodStore.getFoodCount(),
+                foodStore.getData()
             ]);
 
             window.location.reload()
             break;
+        // }
+        // break;
         case "EXHIBITION":
-            exhibitionStore.clear();
-            await Promise.all([
-                exhibitionStore.getTable(),
-                exhibitionStore.getCount(),
-            ]);
+            switch (nodeStore.isReview) {
+                case true:
+                    exhibitionStore.clear();
 
-            window.location.reload()
+                    window.location.reload()
+                    break;
+                case false:
+                    exhibitionStore.clear();
+                    await Promise.all([
+                        exhibitionStore.getTable(),
+                        exhibitionStore.getCount(),
+                    ]);
+
+                    window.location.reload()
+                    break;
+            }
             break;
         case "ENTRY":
             entryStore.clear();

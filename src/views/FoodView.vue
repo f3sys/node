@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { type DetectedBarcode } from "barcode-detector/pure";
+import { ArcElement, CategoryScale, Chart as ChartJS, Colors, Filler, Legend, LinearScale, LineElement, PointElement, Tooltip } from 'chart.js';
 import { Check, Pencil, ScanQrCode, Send, X } from "lucide-vue-next";
 import Sqids from "sqids";
 import { computed, ref } from 'vue';
+import { Line, Pie } from "vue-chartjs";
 import { QrcodeStream } from 'vue-qrcode-reader';
 import { useFoodStore } from '../stores/food';
 import { useNodeStore } from '../stores/node';
+ChartJS.register(ArcElement, Tooltip, Legend, Colors, CategoryScale, LinearScale, PointElement, LineElement, Filler)
 
 const nodeStore = useNodeStore()
 const foodStore = useFoodStore()
@@ -51,7 +54,7 @@ const price = computed(() => {
 });
 
 const onDetect = async ([firstDetectedCode]: DetectedBarcode[]) => {
-    if (sqids.decode(f3sid.value).length !== 2) return;
+    if (sqids.decode(firstDetectedCode.rawValue).length !== 2) return;
     f3sid.value = firstDetectedCode.rawValue;
     isF3SiDScanned.value = true;
     isScannerVisible.value = false;
@@ -64,12 +67,13 @@ const onClickSave = (async (id: number) => {
     console.log(newId.value, newFoodId.value, newQuantity.value);
     editIsLoading.value = true;
 
-    const updateFoodResult = await foodStore.updateFood(newId.value, newFoodId.value, newQuantity.value);
+    const updateFoodResult = await foodStore.updateFood(Number(newId.value), Number(newFoodId.value), Number(newQuantity.value));
     if (updateFoodResult) {
         const [tableFoodResult] = await Promise.all([
             foodStore.getTable(),
-            foodStore.getCount(),
-            foodStore.getFoodCount()
+            // foodStore.getCount(),
+            foodStore.getFoodCount(),
+            foodStore.getData()
         ]);
 
         if (tableFoodResult) {
@@ -129,16 +133,17 @@ const onSubmit = async () => {
     const sendFoodResult = await foodStore.sendFood(f3sid.value, Array.from(selectedFoods.value.entries())
         .filter(([_, food]) => food.isSelected)
         .map(([id, food]) => ({
-            id,
-            quantity: food.quantity
+            id: Number(id),
+            quantity: Number(food.quantity)
         }))
     );
 
     if (sendFoodResult) {
         const [tableFoodResult] = await Promise.all([
             foodStore.getTable(),
-            foodStore.getCount(),
-            foodStore.getFoodCount()
+            // foodStore.getCount(),
+            foodStore.getFoodCount(),
+            foodStore.getData()
         ]);
         if (tableFoodResult) {
             f3sid.value = '';
@@ -151,6 +156,39 @@ const onSubmit = async () => {
 
     isLoading.value = false;
 }
+
+const donutLabels = computed(() =>
+    foodStore.foods_count.map(food => food.name)
+);
+const donutDatas = computed(() =>
+    foodStore.foods_count.map(food => food.count)
+);
+
+// const lineLabels = computed(() =>
+//     // foodStore.foods_line_graph_data.map(data => data.name)
+//     // foodStore.foods_line_graph_data.map(food => ({
+//     //     label: food.name,
+//     //     data: food.foods.map(count => (count.count)),
+//     // }))
+// )
+const lineLabels = Array.from({ length: 24 }, (_, i) => i.toString());
+const lineDatas = computed(() => {
+    const datasets = foodStore.foods_line_graph_data.map(food => ({
+        label: food.name,
+        data: food.foods.map(count => count.count),
+    }));
+
+    const totalData = Array.from({ length: 24 }, (_, i) =>
+        foodStore.foods_line_graph_data.reduce((acc, food) => acc + (food.foods[i]?.count || 0), 0)
+    );
+
+    datasets.push({
+        label: "Total",
+        data: totalData,
+    });
+
+    return datasets;
+});
 </script>
 
 <template>
@@ -341,6 +379,84 @@ const onSubmit = async () => {
                     </table>
                 </article>
             </div>
+            <div class="Donut-Chart">
+                <article>
+                    <header>
+                        <hgroup class="mb-0">
+                            <h2>円グラフ</h2>
+                            <p>Pie Chart</p>
+                        </hgroup>
+                    </header>
+                    <div>
+                        <Pie :data="{
+                            labels: donutLabels,
+                            datasets: [{
+                                data: donutDatas,
+                            }]
+                        }" :options="{
+                            animation: false,
+                            plugins: {
+                                colors: {
+                                    forceOverride: true
+                                },
+                                legend: {
+                                    labels: {
+                                        font: {
+                                            size: 15
+                                        }
+                                    }
+                                }
+                            }
+                        }" />
+                    </div>
+                </article>
+            </div>
+            <div class="Line-Chart">
+                <article>
+                    <header>
+                        <hgroup class="mb-0">
+                            <h2>折れ線グラフ</h2>
+                            <p>Line Chart</p>
+                        </hgroup>
+                    </header>
+                    <div>
+                        <Line :data="{
+                            labels: lineLabels,
+                            datasets: lineDatas
+                        }" :options="{
+                            animation: false,
+                            plugins: {
+                                colors: {
+                                    forceOverride: true
+                                },
+                                legend: {
+                                    labels: {
+                                        font: {
+                                            size: 15
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    ticks: {
+                                        font: {
+                                            size: 12
+                                        }
+                                    },
+                                },
+                                y: {
+                                    ticks: {
+                                        font: {
+                                            size: 12
+                                        }
+                                    },
+                                }
+                            }
+                        }" />
+                    </div>
+                </article>
+            </div>
         </div>
         <dialog :open="isScannerVisible">
             <article class="max-w-lg">
@@ -365,12 +481,13 @@ const onSubmit = async () => {
 .parent {
     display: grid;
     grid-template-columns: 0.7fr 1.3fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: auto auto auto;
     gap: 0em 1em;
     grid-auto-flow: row;
     grid-template-areas:
         "Order Table"
-        "Stats Table";
+        "Stats Table"
+        "Donut-Chart Line-Chart";
 }
 
 .Order {
@@ -383,5 +500,13 @@ const onSubmit = async () => {
 
 .Table {
     grid-area: Table;
+}
+
+.Donut-Chart {
+    grid-area: Donut-Chart;
+}
+
+.Line-Chart {
+    grid-area: Line-Chart;
 }
 </style>

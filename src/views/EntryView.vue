@@ -26,7 +26,7 @@ const sqids = new Sqids({
 })
 
 const onDetect = async ([firstDetectedCode]: DetectedBarcode[]) => {
-    if (sqids.decode(f3sid.value).length !== 2) return;
+    if (sqids.decode(firstDetectedCode.rawValue).length !== 2) return;
     f3sid.value = firstDetectedCode.rawValue;
     isF3SiDScanned.value = true;
     isScannerVisible.value = false;
@@ -176,6 +176,16 @@ const onSubmit = async () => {
                     </table>
                 </article>
             </div>
+            <div class="Donut-Chart">
+                <article>
+                    Donut Chart
+                </article>
+            </div>
+            <div class="Line-Chart">
+                <article>
+                    Line Chart
+                </article>
+            </div>
         </div>
         <dialog :open="isScannerVisible">
             <article class="max-w-lg">
@@ -197,15 +207,16 @@ const onSubmit = async () => {
 </template>
 
 <style lang="css" scoped>
-.parent {
+.container {
     display: grid;
-    grid-template-columns: 0.7fr 1.3fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 0.8fr 1.2fr;
+    grid-template-rows: 1fr 1fr 1fr;
     gap: 0em 1em;
     grid-auto-flow: row;
     grid-template-areas:
         "Order Table"
-        "Stats Table";
+        "Stats Table"
+        "Donut-Chart Line-Chart";
 }
 
 .Order {
@@ -218,5 +229,13 @@ const onSubmit = async () => {
 
 .Table {
     grid-area: Table;
+}
+
+.Donut-Chart {
+    grid-area: Donut-Chart;
+}
+
+.Line-Chart {
+    grid-area: Line-Chart;
 }
 </style>

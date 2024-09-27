@@ -23,6 +23,17 @@ const router = createRouter({
             path: "/entry",
             name: "entry",
             component: () => import('../views/EntryView.vue'),
+        },
+        {
+            path: "/review",
+            name: "review",
+            children: [
+                {
+                    path: "/exhibition",
+                    name: "exhibition",
+                    component: () => import('../views/ExhibitionFoodView.vue'),
+                }
+            ]
         }
     ]
 })
@@ -39,10 +50,20 @@ router.beforeEach((to, _, next) => {
             }
             break;
         case "EXHIBITION":
-            if (to.name !== "exhibition") {
-                next("/exhibition"); // Redirect to exhibition if not already there
-            } else {
-                next(); // Proceed if already on exhibition page
+            switch (nodeStore.isReview) {
+                case true:
+                    if (to.name !== "review/exhibition") {
+                        next("/review/exhibition"); // Redirect to review if not already there
+                    } else {
+                        next(); // Proceed if already on review page
+                    }
+                    break;
+                case false:
+                    if (to.name !== "exhibition") {
+                        next("/exhibition"); // Redirect to exhibition if not already there
+                    } else {
+                        next(); // Proceed if already on exhibition page
+                    } break;
             }
             break;
         case "ENTRY":

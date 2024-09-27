@@ -5,6 +5,7 @@ export const useNodeStore = defineStore("node", () => {
     const key = ref("")
     const name = ref("")
     const type = ref("")
+    const isReview = ref(false)
 
     async function setKey() {
         const url = import.meta.env.VITE_API_URL;
@@ -35,17 +36,20 @@ export const useNodeStore = defineStore("node", () => {
 
         name.value = data.name
         type.value = data.type
+        isReview.value = data.is_review
     }
 
     function clear() {
         name.value = "";
         type.value = "";
+        isReview.value = false;
     }
 
     return {
         key,
         name,
         type,
+        isReview,
         setKey,
         getNode,
         clear

@@ -10,11 +10,13 @@
   },
   "dependencies": {
     "barcode-detector": "^2.2.8",
+    "chart.js": "^4.4.4",
     "lucide-vue-next": "^0.445.0",
     "pinia": "^2.2.2",
     "pinia-plugin-persistedstate": "^4.0.2",
     "sqids": "^0.3.0",
     "vue": "^3.4.37",
+    "vue-chartjs": "^5.3.1",
     "vue-qrcode-reader": "^5.5.10",
     "vue-router": "^4.4.5"
   },

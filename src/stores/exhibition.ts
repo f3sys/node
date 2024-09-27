@@ -78,10 +78,29 @@ export const useExhibitionStore = defineStore("exhibition", () => {
         }
     }
 
+    async function sendReview(f3sid: string, rating: number): Promise<boolean> {
+        const headers = new Headers();
+        headers.append("Authorization", "Bearer " + nodeStore.key);
+        headers.append("Content-Type", "application/json");
+        const url = import.meta.env.VITE_API_URL;
+        try {
+            const data = await fetch(url + "protected/" + "review/" + "exhibition", {
+                method: "POST",
+                headers: headers,
+                body: JSON.stringify({ f3sid, rating })
+            });
+
+            return data.ok
+        } catch (e) {
+            return false
+        }
+    }
+
     return {
         exhibitions_table,
         count,
         sendExhibition,
+        sendReview,
         getTable,
         getCount,
         clear

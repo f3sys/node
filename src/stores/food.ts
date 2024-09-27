@@ -8,8 +8,9 @@ export const useFoodStore = defineStore("food", () => {
     const foods = ref<Array<{ id: number, name: string, price: number }>>([])
     const foods_count = ref<Array<{ id: number, name: string, count: number }>>([])
     const foods_table = ref<Array<{ id: number, f3sid: string, food_id: number, food_name: string, quantity: number, price: string, created_at: string }>>([])
+    const foods_line_graph_data = ref<Array<{ name: string, foods: Array<{ count: number, hour: number }> }>>([])
 
-    const count = ref<number>(0)
+    // const count = ref<number>(0)
 
     function clear() {
         foods.value = []
@@ -92,24 +93,24 @@ export const useFoodStore = defineStore("food", () => {
         }
     }
 
-    async function getCount(): Promise<boolean> {
-        const headers = new Headers();
-        headers.append("Authorization", "Bearer " + nodeStore.key)
-        headers.append("Content-Type", "application/json")
-        const url = import.meta.env.VITE_API_URL
-        try {
-            const data = await fetch(url + "protected/" + "count", {
-                method: "GET",
-                headers: headers,
-            }).then((r) => r.json())
+    // async function getCount(): Promise<boolean> {
+    //     const headers = new Headers();
+    //     headers.append("Authorization", "Bearer " + nodeStore.key)
+    //     headers.append("Content-Type", "application/json")
+    //     const url = import.meta.env.VITE_API_URL
+    //     try {
+    //         const data = await fetch(url + "protected/" + "count", {
+    //             method: "GET",
+    //             headers: headers,
+    //         }).then((r) => r.json())
 
-            count.value = data.count
+    //         count.value = data.count
 
-            return true
-        } catch (e) {
-            return false
-        }
-    }
+    //         return true
+    //     } catch (e) {
+    //         return false
+    //     }
+    // }
 
 
     async function getFoodCount(): Promise<boolean> {
@@ -153,15 +154,44 @@ export const useFoodStore = defineStore("food", () => {
         }
     }
 
+    async function getData(): Promise<boolean> {
+        const headers = new Headers()
+        headers.append("Authorization", "Bearer " + nodeStore.key)
+        headers.append("Content-Type", "application/json")
+        const url = import.meta.env.VITE_API_URL
+        try {
+            const data = await fetch(url + "protected/" + "data/" + "foodstall", {
+                method: "GET",
+                headers: headers,
+            }).then((r) => r.json())
+
+            // foods_line_graph_data.value = []
+
+            // data.forEach((food: { name: string, counts: Array<{ count: number, hour: number }> }) => {
+            //     foods_line_graph_data.value.push({ name: food.name, counts: food.counts })
+            // })
+
+            console.log(data)
+
+            foods_line_graph_data.value = data
+
+            return true
+        } catch (e) {
+            return false
+        }
+    }
+
     return {
         foods,
         foods_count,
         foods_table,
+        foods_line_graph_data,
         getFoods,
         sendFood,
         getTable,
-        getCount,
+        // getCount,
         getFoodCount,
+        getData,
         updateFood,
         clear
     }
