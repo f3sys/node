@@ -27,20 +27,20 @@ async function onSubmit() {
     await nodeStore.getNode();
     switch (nodeStore.type) {
         case "FOODSTALL":
+            foodStore.clear();
+
             // switch (nodeStore.isReview) {
             //     case true:
-            //         foodStore.clear();
-            //         await Promise.all([
-            //             foodStore.getFoods(),
-            //             foodStore.getTable(),
-            //             foodStore.getFoodCount(),
-            //             foodStore.getData()
-            //         ]);
+            // await Promise.all([
+            //     foodStore.getFoods(),
+            //     foodStore.getTable(),
+            //     foodStore.getFoodCount(),
+            //     foodStore.getData()
+            // ]);
 
-            //         window.location.reload()
-            //         break;
-            //     case false:
-            foodStore.clear();
+            // window.location.reload()
+            // break;
+            // case false:
             await Promise.all([
                 foodStore.getFoods(),
                 foodStore.getTable(),
@@ -53,25 +53,25 @@ async function onSubmit() {
         // }
         // break;
         case "EXHIBITION":
-            switch (nodeStore.isReview) {
-                case true:
-                    exhibitionStore.clear();
+            exhibitionStore.clear();
 
-                    window.location.reload()
-                    break;
-                case false:
-                    exhibitionStore.clear();
-                    await Promise.all([
-                        exhibitionStore.getTable(),
-                        exhibitionStore.getCount(),
-                    ]);
+            // switch (nodeStore.isReview) {
+            // case true:
+            //     window.location.reload()
+            //     break;
+            // case false:
+            await Promise.all([
+                exhibitionStore.getTable(),
+                exhibitionStore.getCount(),
+            ]);
 
-                    window.location.reload()
-                    break;
-            }
+            window.location.reload()
             break;
+        // }
+        // break;
         case "ENTRY":
             entryStore.clear();
+
             await Promise.all([
                 entryStore.getTable(),
                 entryStore.getCount(),

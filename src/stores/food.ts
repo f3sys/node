@@ -181,6 +181,24 @@ export const useFoodStore = defineStore("food", () => {
         }
     }
 
+    async function sendReview(f3sid: string, rating: number): Promise<boolean> {
+        const headers = new Headers();
+        headers.append("Authorization", "Bearer " + nodeStore.key);
+        headers.append("Content-Type", "application/json");
+        const url = import.meta.env.VITE_API_URL;
+        try {
+            const data = await fetch(url + "protected/" + "review/" + "foodstall", {
+                method: "POST",
+                headers: headers,
+                body: JSON.stringify({ f3sid, rating })
+            });
+
+            return data.ok
+        } catch (e) {
+            return false
+        }
+    }
+
     return {
         foods,
         foods_count,
@@ -193,6 +211,7 @@ export const useFoodStore = defineStore("food", () => {
         getFoodCount,
         getData,
         updateFood,
+        sendReview,
         clear
     }
 }, {

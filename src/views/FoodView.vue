@@ -164,13 +164,6 @@ const donutDatas = computed(() =>
     foodStore.foods_count.map(food => food.count)
 );
 
-// const lineLabels = computed(() =>
-//     // foodStore.foods_line_graph_data.map(data => data.name)
-//     // foodStore.foods_line_graph_data.map(food => ({
-//     //     label: food.name,
-//     //     data: food.foods.map(count => (count.count)),
-//     // }))
-// )
 const lineLabels = Array.from({ length: 24 }, (_, i) => i.toString());
 const lineDatas = computed(() => {
     const datasets = foodStore.foods_line_graph_data.map(food => ({
