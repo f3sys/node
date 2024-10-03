@@ -1,14 +1,25 @@
 <script setup lang="ts">
 import { type DetectedBarcode } from "barcode-detector/pure";
-import { ArcElement, CategoryScale, Chart as ChartJS, Colors, Filler, Legend, LinearScale, LineElement, PointElement, Tooltip } from 'chart.js';
+import { ArcElement, CategoryScale, Chart as ChartJS, Colors, Legend, LinearScale, LineElement, PointElement, Tooltip } from 'chart.js';
 import { Check, Pencil, ScanQrCode, Send, X } from "lucide-vue-next";
 import Sqids from "sqids";
 import { computed, ref } from 'vue';
-import { Line, Pie } from "vue-chartjs";
+import { Doughnut, Line } from "vue-chartjs";
 import { QrcodeStream } from 'vue-qrcode-reader';
 import { useFoodStore } from '../stores/food';
 import { useNodeStore } from '../stores/node';
-ChartJS.register(ArcElement, Tooltip, Legend, Colors, CategoryScale, LinearScale, PointElement, LineElement, Filler)
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Colors)
+
+// const BORDER_COLORS = [
+//     'rgb(54, 162, 235)', // blue
+//     'rgb(255, 99, 132)', // red
+//     'rgb(255, 159, 64)', // orange
+//     'rgb(255, 205, 86)', // yellow
+//     'rgb(75, 192, 192)', // green
+//     'rgb(153, 102, 255)', // purple
+//     'rgb(201, 203, 207)' // grey
+// ];
+const MAX_LABELS = 21;
 
 const nodeStore = useNodeStore()
 const foodStore = useFoodStore()
@@ -160,28 +171,21 @@ const onSubmit = async () => {
 const donutLabels = computed(() =>
     foodStore.foods_count.map(food => food.name)
 );
-const donutDatas = computed(() =>
+const donutCountDatas = computed(() =>
     foodStore.foods_count.map(food => food.count)
 );
+const donutQuantityDatas = computed(() =>
+    foodStore.foods_count.map(food => food.quantity)
+);
 
-const lineLabels = Array.from({ length: 24 }, (_, i) => i.toString());
-const lineDatas = computed(() => {
-    const datasets = foodStore.foods_line_graph_data.map(food => ({
-        label: food.name,
-        data: food.foods.map(count => count.count),
-    }));
-
-    const totalData = Array.from({ length: 24 }, (_, i) =>
-        foodStore.foods_line_graph_data.reduce((acc, food) => acc + (food.foods[i]?.count || 0), 0)
-    );
-
-    datasets.push({
-        label: "Total",
-        data: totalData,
-    });
-
-    return datasets;
-});
+let lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
+    if (i % 2 === 0) {
+        acc.push((i / 2 + 8).toString().padStart(2, '0') + ":00");
+    } else {
+        acc.push((Math.floor(i / 2) + 8).toString().padStart(2, '0') + ":30");
+    }
+    return acc;
+}, []);
 </script>
 
 <template>
@@ -259,13 +263,14 @@ const lineDatas = computed(() => {
                             <tr>
                                 <th scope="col">Name</th>
                                 <th scope="col">Price</th>
+                                <th scope="col">Count</th>
                                 <th scope="col">Quantity</th>
                                 <th scope="col">Total Price</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="food in foodStore.foods_count">
-                                <th scope="row">{{ food.name }}</th>
+                                <th scope="row" class="text-sm">{{ food.name }}</th>
                                 <td>
                                     {{
                                         foodStore.foods.find(f => f.id === food.id)?.price.toLocaleString("ja-JP",
@@ -276,6 +281,9 @@ const lineDatas = computed(() => {
                                 </td>
                                 <td>
                                     {{ food.count }}
+                                </td>
+                                <td>
+                                    {{ food.quantity }}
                                 </td>
                                 <td>
                                     {{
@@ -294,6 +302,11 @@ const lineDatas = computed(() => {
                                 <td>
                                     {{
                                         foodStore.foods_count.reduce((acc, food) => acc + food.count, 0)
+                                    }}
+                                </td>
+                                <td>
+                                    {{
+                                        foodStore.foods_count.reduce((acc, food) => acc + food.quantity, 0)
                                     }}
                                 </td>
                                 <td>
@@ -318,12 +331,12 @@ const lineDatas = computed(() => {
                             <p>Table</p>
                         </hgroup>
                     </header>
-                    <table class="striped mb-0">
+                    <table class="striped mb-0 !table-fixed">
                         <thead>
                             <tr>
                                 <th scope="col">F3SiD</th>
                                 <th scope="col">Name</th>
-                                <th scope="col">Quantity</th>
+                                <th scope="col">Count</th>
                                 <th scope="col">Price</th>
                                 <th scope="col">Bought At</th>
                                 <th scope="col" class="text-center">Edit</th>
@@ -343,14 +356,14 @@ const lineDatas = computed(() => {
                                 </td>
                                 <td v-else>{{ food.food_name }}</td>
                                 <td v-if="editingFoods.get(food.id)">
-                                    <input type="number" v-model="newQuantity" class="!mb-0 !py-0 !h-8 !w-24"
+                                    <input type="number" v-model="newQuantity" class="!mb-0 !py-0 !h-8 !w-20"
                                         :disabled="editIsLoading" />
                                 </td>
                                 <td v-else>{{ food.quantity }}</td>
                                 <td>{{ food.price }}</td>
                                 <td>{{ food.created_at }}</td>
                                 <td>
-                                    <div class="flex">
+                                    <div class="grid grid-cols-1 gap-2">
                                         <button v-if="editingFoods.get(food.id)" @click="onClickCancel(food.id)"
                                             :disabled="editIsLoading"
                                             class="flex items-center justify-center size-8 p-0 mr-auto outline secondary">
@@ -376,22 +389,28 @@ const lineDatas = computed(() => {
                 <article>
                     <header>
                         <hgroup class="mb-0">
-                            <h2>円グラフ</h2>
-                            <p>Pie Chart</p>
+                            <h2>ドーナツグラフ</h2>
+                            <p>Doughnut Chart</p>
                         </hgroup>
                     </header>
                     <div>
-                        <Pie :data="{
+                        <Doughnut :data="{
                             labels: donutLabels,
                             datasets: [{
-                                data: donutDatas,
+                                label: 'Quantity',
+                                data: donutQuantityDatas,
+                                // backgroundColor: [...BORDER_COLORS.slice(0, donutCountDatas.length)],
+                            }, {
+                                label: 'Count',
+                                data: donutCountDatas,
+                                // backgroundColor: [...BORDER_COLORS.slice(0, donutCountDatas.length)],
                             }]
                         }" :options="{
                             animation: false,
                             plugins: {
-                                colors: {
-                                    forceOverride: true
-                                },
+                                // colors: {
+                                // forceOverride: true
+                                // },
                                 legend: {
                                     labels: {
                                         font: {
@@ -415,7 +434,7 @@ const lineDatas = computed(() => {
                     <div>
                         <Line :data="{
                             labels: lineLabels,
-                            datasets: lineDatas
+                            datasets: foodStore.foods_line_graph_data
                         }" :options="{
                             animation: false,
                             plugins: {

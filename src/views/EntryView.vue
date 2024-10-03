@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { type DetectedBarcode } from "barcode-detector/pure";
+import { ArcElement, CategoryScale, Chart as ChartJS, Colors, Legend, LinearScale, LineElement, PointElement, Tooltip } from 'chart.js';
 import { ScanQrCode, Send } from "lucide-vue-next";
 import Sqids from "sqids";
-import { ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import { Doughnut, Line } from "vue-chartjs";
 import { QrcodeStream } from 'vue-qrcode-reader';
 import { useEntryStore } from "../stores/entry";
 import { useNodeStore } from '../stores/node';
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Colors)
+const MAX_LABELS = 21
 
 const nodeStore = useNodeStore()
 const entryStore = useEntryStore()
@@ -56,8 +60,9 @@ const onSubmit = async () => {
     if (sendFoodResult) {
         const [tableFoodResult] = await Promise.all([
             entryStore.getTable(),
-            entryStore.getCount(),
-            entryStore.getEntryCount()
+            // entryStore.getCount(),
+            entryStore.getEntryCount(),
+            entryStore.getData()
         ]);
         if (tableFoodResult) {
             f3sid.value = '';
@@ -66,6 +71,30 @@ const onSubmit = async () => {
 
     isLoading.value = false;
 }
+
+const donutLabels = computed(() => {
+    return entryStore.entries_count.map(entry => entry.type)
+})
+const donutCountDataset = computed(() => {
+    return entryStore.entries_count.map(entry => entry.count)
+})
+
+let lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
+    if (i % 2 === 0) {
+        acc.push((i / 2 + 8).toString().padStart(2, '0') + ":00");
+    } else {
+        acc.push((Math.floor(i / 2) + 8).toString().padStart(2, '0') + ":30");
+    }
+    return acc;
+}, []);
+
+onMounted(async () => {
+    await Promise.all([
+        entryStore.getData(),
+        entryStore.getEntryCount(),
+        entryStore.getTable()
+    ])
+})
 </script>
 
 <template>
@@ -142,7 +171,8 @@ const onSubmit = async () => {
                                 <th scope="row">Total</th>
                                 <td>
                                     {{
-                                        entryStore.count.toLocaleString("ja-JP")
+                                        entryStore.entries_count.reduce((acc, entry) => acc + entry.count,
+                                            0).toLocaleString("ja-JP")
                                     }}
                                 </td>
                             </tr>
@@ -178,12 +208,81 @@ const onSubmit = async () => {
             </div>
             <div class="Donut-Chart">
                 <article>
-                    Donut Chart
+                    <header>
+                        <hgroup class="mb-0">
+                            <h2>ドーナツグラフ</h2>
+                            <p>Doughnut Chart</p>
+                        </hgroup>
+                    </header>
+                    <div>
+                        <Doughnut :data="{
+                            labels: donutLabels,
+                            datasets: [{
+                                label: 'Count',
+                                data: donutCountDataset,
+                            }]
+                        }" :options="{
+                            animation: false,
+                            plugins: {
+                                colors: {
+                                    forceOverride: true
+                                },
+                                legend: {
+                                    labels: {
+                                        font: {
+                                            size: 15
+                                        }
+                                    }
+                                }
+                            }
+                        }" />
+                    </div>
                 </article>
             </div>
             <div class="Line-Chart">
                 <article>
-                    Line Chart
+                    <header>
+                        <hgroup class="mb-0">
+                            <h2>折れ線グラフ</h2>
+                            <p>Line Chart</p>
+                        </hgroup>
+                    </header>
+                    <div>
+                        <Line :data="{
+                            labels: lineLabels,
+                            datasets: entryStore.entries_line_graph_data
+                        }" :options="{
+                            animation: false,
+                            plugins: {
+                                colors: {
+                                    forceOverride: true
+                                },
+                                legend: {
+                                    labels: {
+                                        font: {
+                                            size: 15
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    ticks: {
+                                        font: {
+                                            size: 12
+                                        }
+                                    },
+                                },
+                                y: {
+                                    ticks: {
+                                        font: {
+                                            size: 12
+                                        }
+                                    },
+                                }
+                            }
+                        }" />
+                    </div>
                 </article>
             </div>
         </div>
@@ -207,10 +306,10 @@ const onSubmit = async () => {
 </template>
 
 <style lang="css" scoped>
-.container {
+.parent {
     display: grid;
     grid-template-columns: 0.8fr 1.2fr;
-    grid-template-rows: 1fr 1fr 1fr;
+    grid-template-rows: auto auto auto;
     gap: 0em 1em;
     grid-auto-flow: row;
     grid-template-areas:

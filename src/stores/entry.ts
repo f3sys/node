@@ -7,11 +7,16 @@ const nodeStore = useNodeStore()
 export const useEntryStore = defineStore("entry", () => {
     const entries_count = ref<Array<{ type: string, count: number }>>([])
     const entries_table = ref<Array<{ id: number, f3sid: string, type: string, created_at: string }>>([])
+    // const entries_line_graph_data = ref<Array<{ name: string, entries: Array<{ count: number, hour: number, minute: number }> }>>([])
+    const entries_line_graph_data = ref<Array<{ label: string, data: number[] }>>([])
+    const MAX_LABELS = 21;
 
-    const count = ref<number>(0)
+    // const count = ref<number>(0)
 
     function clear() {
+        entries_count.value = []
         entries_table.value = []
+        entries_line_graph_data.value = []
     }
 
     async function sendEntry(f3sid: string): Promise<boolean> {
@@ -61,24 +66,24 @@ export const useEntryStore = defineStore("entry", () => {
         }
     }
 
-    async function getCount(): Promise<boolean> {
-        const headers = new Headers();
-        headers.append("Authorization", "Bearer " + nodeStore.key)
-        headers.append("Content-Type", "application/json")
-        const url = import.meta.env.VITE_API_URL
-        try {
-            const data = await fetch(url + "protected/" + "count", {
-                method: "GET",
-                headers: headers,
-            }).then((r) => r.json())
+    // async function getCount(): Promise<boolean> {
+    //     const headers = new Headers();
+    //     headers.append("Authorization", "Bearer " + nodeStore.key)
+    //     headers.append("Content-Type", "application/json")
+    //     const url = import.meta.env.VITE_API_URL
+    //     try {
+    //         const data = await fetch(url + "protected/" + "count", {
+    //             method: "GET",
+    //             headers: headers,
+    //         }).then((r) => r.json())
 
-            count.value = data.count
+    //         count.value = data.count
 
-            return true
-        } catch (e) {
-            return false
-        }
-    }
+    //         return true
+    //     } catch (e) {
+    //         return false
+    //     }
+    // }
 
     async function getEntryCount(): Promise<boolean> {
         const headers = new Headers();
@@ -103,16 +108,58 @@ export const useEntryStore = defineStore("entry", () => {
         }
     }
 
+    function hour(i: number): number {
+        return Math.floor(i / 2) + 8;
+    }
+    function minute(i: number): number {
+        return (i % 2) * 30;
+    }
+    async function getData(): Promise<boolean> {
+        const headers = new Headers()
+        headers.append("Authorization", "Bearer " + nodeStore.key)
+        headers.append("Content-Type", "application/json")
+        const url = import.meta.env.VITE_API_URL
+        try {
+            const data = await fetch(url + "protected/" + "data/" + "entry", {
+                method: "GET",
+                headers: headers,
+            }).then((r) => r.json())
+
+            const formattedData: Array<{
+                name: string,
+                entries: {
+                    count: number;
+                    hour: number;
+                    minute: number;
+                }[];
+            }> = data;
+
+            const datasets = formattedData.map(entry => ({
+                label: entry.name,
+                data: Array.from({ length: MAX_LABELS }, (_, i) => {
+                    const data = entry.entries.find(e => e.hour === hour(i) && e.minute === minute(i));
+                    return data ? data.count : 0;
+                }),
+            }));
+
+            entries_line_graph_data.value = datasets;
+
+            return true
+        } catch (e) {
+            return false
+        }
+    }
+
     return {
         entries_count,
         entries_table,
-        count,
+        entries_line_graph_data,
+        // count,
         sendEntry,
         getTable,
-        getCount,
+        // getCount,
         getEntryCount,
+        getData,
         clear
     }
-}, {
-    persist: true,
 })

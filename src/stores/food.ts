@@ -5,10 +5,12 @@ import { useNodeStore } from "./node"
 const nodeStore = useNodeStore()
 
 export const useFoodStore = defineStore("food", () => {
-    const foods = ref<Array<{ id: number, name: string, price: number }>>([])
-    const foods_count = ref<Array<{ id: number, name: string, count: number }>>([])
+    const foods = ref<Array<{ id: number, name: string, price: number, quantity: number }>>([])
+    const foods_count = ref<Array<{ id: number, name: string, count: number, quantity: number }>>([])
     const foods_table = ref<Array<{ id: number, f3sid: string, food_id: number, food_name: string, quantity: number, price: string, created_at: string }>>([])
-    const foods_line_graph_data = ref<Array<{ name: string, foods: Array<{ count: number, hour: number }> }>>([])
+    // const foods_line_graph_data = ref<Array<{ name: string, foods: Array<{ count: number, hour: number, minute: number }> }>>([])
+    const foods_line_graph_data = ref<Array<{ label: string, data: number[] }>>([])
+    const MAX_LABELS = 21;
 
     // const count = ref<number>(0)
 
@@ -31,8 +33,8 @@ export const useFoodStore = defineStore("food", () => {
 
             foods.value = []
 
-            data.forEach((food: { id: number, name: string, price: number }) => {
-                foods.value.push({ id: food.id, name: food.name, price: food.price })
+            data.forEach((food: { id: number, name: string, price: number, quantity: number }) => {
+                foods.value.push({ id: food.id, name: food.name, price: food.price, quantity: food.quantity })
             })
 
             return true
@@ -126,8 +128,8 @@ export const useFoodStore = defineStore("food", () => {
 
             foods_count.value = []
 
-            data.forEach((food: { id: number, name: string, count: number }) => {
-                foods_count.value.push({ id: food.id, name: food.name, count: food.count })
+            data.forEach((food: { id: number, name: string, count: number, quantity: number }) => {
+                foods_count.value.push({ id: food.id, name: food.name, count: food.count, quantity: food.quantity })
             })
 
             return true
@@ -154,6 +156,12 @@ export const useFoodStore = defineStore("food", () => {
         }
     }
 
+    function hour(i: number): number {
+        return Math.floor(i / 2) + 8;
+    }
+    function minute(i: number): number {
+        return (i % 2) * 30;
+    }
     async function getData(): Promise<boolean> {
         const headers = new Headers()
         headers.append("Authorization", "Bearer " + nodeStore.key)
@@ -165,15 +173,49 @@ export const useFoodStore = defineStore("food", () => {
                 headers: headers,
             }).then((r) => r.json())
 
-            // foods_line_graph_data.value = []
+            const formattedData: Array<{
+                name: string,
+                foods: {
+                    count: number;
+                    hour: number;
+                    minute: number;
+                }[];
+            }> = data;
 
-            // data.forEach((food: { name: string, counts: Array<{ count: number, hour: number }> }) => {
-            //     foods_line_graph_data.value.push({ name: food.name, counts: food.counts })
-            // })
+            const datasets = formattedData.map(food => ({
+                label: food.name,
+                data: Array.from({ length: MAX_LABELS }, (_, i) => {
+                    const foodData = food.foods.find(f => f.hour === hour(i) && f.minute === minute(i));
+                    return foodData ? foodData.count : 0;
+                }),
+            }));
 
-            console.log(data)
+            const totalCountData = Array.from({ length: MAX_LABELS }, (_, i) => {
+                return formattedData.reduce((acc, food) => {
+                    const foodData = food.foods.find(f => f.hour === hour(i) && f.minute === minute(i));
+                    return acc + (foodData ? foodData.count : 0);
+                }, 0);
+            });
 
-            foods_line_graph_data.value = data
+            const totalQuantityData = Array.from({ length: MAX_LABELS }, (_, i) => {
+                return formattedData.reduce((acc, food) => {
+                    const foodLocalData = foods.value.find(f => f.name === food.name);
+                    const foodData = food.foods.find(f => f.hour === hour(i) && f.minute === minute(i));
+                    return acc + (foodData && foodLocalData ? foodData.count * (foodLocalData.quantity || 0) : 0);
+                }, 0);
+            });
+
+            datasets.push({
+                label: "Total Count",
+                data: totalCountData,
+            });
+
+            datasets.push({
+                label: "Total Quantity",
+                data: totalQuantityData,
+            });
+
+            foods_line_graph_data.value = datasets;
 
             return true
         } catch (e) {
@@ -181,23 +223,23 @@ export const useFoodStore = defineStore("food", () => {
         }
     }
 
-    async function sendReview(f3sid: string, rating: number): Promise<boolean> {
-        const headers = new Headers();
-        headers.append("Authorization", "Bearer " + nodeStore.key);
-        headers.append("Content-Type", "application/json");
-        const url = import.meta.env.VITE_API_URL;
-        try {
-            const data = await fetch(url + "protected/" + "review/" + "foodstall", {
-                method: "POST",
-                headers: headers,
-                body: JSON.stringify({ f3sid, rating })
-            });
+    // async function sendReview(f3sid: string, rating: number): Promise<boolean> {
+    //     const headers = new Headers();
+    //     headers.append("Authorization", "Bearer " + nodeStore.key);
+    //     headers.append("Content-Type", "application/json");
+    //     const url = import.meta.env.VITE_API_URL;
+    //     try {
+    //         const data = await fetch(url + "protected/" + "review/" + "foodstall", {
+    //             method: "POST",
+    //             headers: headers,
+    //             body: JSON.stringify({ f3sid, rating })
+    //         });
 
-            return data.ok
-        } catch (e) {
-            return false
-        }
-    }
+    //         return data.ok
+    //     } catch (e) {
+    //         return false
+    //     }
+    // }
 
     return {
         foods,
@@ -211,9 +253,7 @@ export const useFoodStore = defineStore("food", () => {
         getFoodCount,
         getData,
         updateFood,
-        sendReview,
+        // sendReview,
         clear
     }
-}, {
-    persist: true,
 })
