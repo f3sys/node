@@ -15,6 +15,16 @@ export const useExhibitionStore = defineStore("exhibition", () => {
         line_graph_data.value = []
     }
 
+    async function update(): Promise<boolean> {
+        const [updateResult] = await Promise.all([
+            getCount(),
+            getTable(),
+            getData(),
+        ])
+
+        return updateResult
+    }
+
     async function sendExhibition(f3sid: string): Promise<boolean> {
         const headers = new Headers();
         headers.append("Authorization", "Bearer " + nodeStore.key);
@@ -45,15 +55,6 @@ export const useExhibitionStore = defineStore("exhibition", () => {
             }).then((r) => r.json());
 
             table.value = data
-
-            // data.forEach((food: { id: number, f3sid: string, created_at: string }) => {
-            //     const date = new Date(food.created_at)
-            //     exhibitions_table.value.push({
-            //         id: food.id,
-            //         f3sid: food.f3sid,
-            //         created_at: date.toLocaleTimeString("ja-JP")
-            //     })
-            // })
 
             return true
         } catch (e) {
@@ -107,6 +108,7 @@ export const useExhibitionStore = defineStore("exhibition", () => {
         getTable,
         getCount,
         getData,
+        update,
         clear
     }
 })

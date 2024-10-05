@@ -17,6 +17,17 @@ export const useEntryStore = defineStore("entry", () => {
         line_graph_data.value = []
     }
 
+    async function update(): Promise<boolean> {
+        const [updateResult] = await Promise.all([
+            getCount(),
+            getEntryCount(),
+            getTable(),
+            getData(),
+        ])
+
+        return updateResult
+    }
+
     async function sendEntry(f3sid: string): Promise<boolean> {
         const headers = new Headers();
         headers.append("Authorization", "Bearer " + nodeStore.key);
@@ -92,12 +103,6 @@ export const useEntryStore = defineStore("entry", () => {
         }
     }
 
-    // function hour(i: number): number {
-    //     return Math.floor(i / 2) + 8;
-    // }
-    // function minute(i: number): number {
-    //     return (i % 2) * 30;
-    // }
     async function getData(): Promise<boolean> {
         const headers = new Headers()
         headers.append("Authorization", "Bearer " + nodeStore.key)
@@ -108,23 +113,6 @@ export const useEntryStore = defineStore("entry", () => {
                 method: "GET",
                 headers: headers,
             }).then((r) => r.json())
-
-            // const formattedData: Array<{
-            //     name: string,
-            //     entries: {
-            //         count: number;
-            //         hour: number;
-            //         minute: number;
-            //     }[];
-            // }> = data;
-
-            // const datasets = formattedData.map(entry => ({
-            //     label: entry.name,
-            //     data: Array.from({ length: MAX_LABELS }, (_, i) => {
-            //         const data = entry.entries.find(e => e.hour === hour(i) && e.minute === minute(i));
-            //         return data ? data.count : 0;
-            //     }),
-            // }));
 
             line_graph_data.value = data;
 
@@ -144,6 +132,7 @@ export const useEntryStore = defineStore("entry", () => {
         getCount,
         getEntryCount,
         getData,
+        update,
         clear
     }
 })

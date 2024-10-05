@@ -21,6 +21,18 @@ export const useFoodStore = defineStore("food", () => {
         line_graph_data.value = []
     }
 
+    async function update(): Promise<boolean> {
+        const [updateResult] = await Promise.all([
+            getQuantity(),
+            getCount(),
+            getFoodCount(),
+            getTable(),
+            getData(),
+        ])
+
+        return updateResult
+    }
+
     async function getFoods(): Promise<boolean> {
         const headers = new Headers();
         headers.append("Authorization", "Bearer " + nodeStore.key);
@@ -207,6 +219,7 @@ export const useFoodStore = defineStore("food", () => {
         getFoodCount,
         getData,
         updateFood,
+        update,
         clear
     }
 })

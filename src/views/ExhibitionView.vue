@@ -58,11 +58,7 @@ const onSubmit = async () => {
     const sendFoodResult = await exhibitionStore.sendExhibition(f3sid.value);
 
     if (sendFoodResult) {
-        const [tableFoodResult] = await Promise.all([
-            exhibitionStore.getTable(),
-            exhibitionStore.getCount(),
-            exhibitionStore.getData(),
-        ]);
+        const tableFoodResult = await exhibitionStore.update();
         if (tableFoodResult) {
             f3sid.value = '';
         }
@@ -82,11 +78,7 @@ let lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
 
 onMounted(() => {
     (async () => {
-        await Promise.all([
-            exhibitionStore.getData(),
-            exhibitionStore.getCount(),
-            exhibitionStore.getTable(),
-        ])
+        await exhibitionStore.update()
     })()
 })
 </script>

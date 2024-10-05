@@ -10,15 +10,15 @@ import { useFoodStore } from '../stores/food';
 import { useNodeStore } from '../stores/node';
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Colors)
 
-// const BORDER_COLORS = [
-//     'rgb(54, 162, 235)', // blue
-//     'rgb(255, 99, 132)', // red
-//     'rgb(255, 159, 64)', // orange
-//     'rgb(255, 205, 86)', // yellow
-//     'rgb(75, 192, 192)', // green
-//     'rgb(153, 102, 255)', // purple
-//     'rgb(201, 203, 207)' // grey
-// ];
+const BORDER_COLORS = [
+    'rgb(54, 162, 235)', // blue
+    'rgb(255, 99, 132)', // red
+    'rgb(255, 159, 64)', // orange
+    'rgb(255, 205, 86)', // yellow
+    'rgb(75, 192, 192)', // green
+    'rgb(153, 102, 255)', // purple
+    'rgb(201, 203, 207)' // grey
+];
 const MAX_LABELS = 21;
 
 const total_price = ref("")
@@ -83,13 +83,7 @@ const onClickSave = (async (id: number) => {
 
     const updateFoodResult = await foodStore.updateFood(Number(newId.value), Number(newFoodId.value), Number(newQuantity.value));
     if (updateFoodResult) {
-        const [tableFoodResult] = await Promise.all([
-            foodStore.getTable(),
-            foodStore.getQuantity(),
-            foodStore.getCount(),
-            foodStore.getFoodCount(),
-            foodStore.getData(),
-        ]);
+        const tableFoodResult = await foodStore.update();
 
         if (tableFoodResult) {
             editIsLoading.value = false;
@@ -154,13 +148,7 @@ const onSubmit = async () => {
     );
 
     if (sendFoodResult) {
-        const [tableFoodResult] = await Promise.all([
-            foodStore.getTable(),
-            foodStore.getQuantity(),
-            foodStore.getCount(),
-            foodStore.getFoodCount(),
-            foodStore.getData(),
-        ]);
+        const tableFoodResult = await foodStore.update();
         if (tableFoodResult) {
             f3sid.value = '';
             selectedFoods.value = new Map(foodStore.foods.map(food => [
@@ -425,20 +413,20 @@ onMounted(() => {
                     <Doughnut :data="{
                         labels: donutLabels,
                         datasets: [{
-                            label: 'Count',
+                            label: '回数',
                             data: donutCountDatas,
-                            // backgroundColor: [...BORDER_COLORS.slice(0, donutCountDatas.length)],
+                            backgroundColor: [...BORDER_COLORS.slice(0, donutCountDatas.length)],
                         }, {
-                            label: 'Quantity',
+                            label: '個数',
                             data: donutQuantityDatas,
-                            // backgroundColor: [...BORDER_COLORS.slice(0, donutCountDatas.length)],
+                            backgroundColor: [...BORDER_COLORS.slice(0, donutCountDatas.length)],
                         }]
                     }" :options="{
                         animation: false,
                         plugins: {
-                            colors: {
-                                forceOverride: true
-                            },
+                            // colors: {
+                            //     forceOverride: true
+                            // },
                             legend: {
                                 labels: {
                                     font: {
