@@ -230,7 +230,7 @@ onMounted(() => {
                                 </small>
                             </label>
                             <fieldset :aria-invalid="foodInvalid" aria-describedby="food-helper">
-                                <legend>Foods:</legend>
+                                <legend>商品:</legend>
                                 <template v-for="food in selectedFoods" :key="food[0]">
                                     <input type="checkbox" :id="food[0].toString()" :name="food[1].name"
                                         v-model="food[1].isSelected" />
@@ -248,7 +248,7 @@ onMounted(() => {
                                 </label>
                             </template>
                             <label>
-                                Price
+                                値段
                                 <input :value="price" name="price" class="!h-10" readonly />
                             </label>
                         </fieldset>

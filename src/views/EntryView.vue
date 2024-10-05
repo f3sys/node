@@ -209,7 +209,7 @@ onMounted(() => {
                     <Doughnut :data="{
                         labels: donutLabels,
                         datasets: [{
-                            label: 'Count',
+                            label: '回数',
                             data: donutCountDataset,
                         }]
                     }" :options="{
