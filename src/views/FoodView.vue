@@ -106,7 +106,7 @@ const onClickEdit = ((food: {
     food_id: number,
     food_name: string,
     quantity: number,
-    price: string,
+    price: number,
     created_at: string
 }) => {
     // Check if other food is being edited
@@ -382,7 +382,14 @@ onMounted(() => {
                                         :disabled="editIsLoading" />
                                 </td>
                                 <td v-else>{{ food.quantity }}</td>
-                                <td>{{ food.price }}</td>
+                                <td>
+                                    {{ 
+                                        (food.price * food.quantity).toLocaleString("ja-JP", {
+                                            style: "currency",
+                                            currency: "JPY"
+                                        }) 
+                                    }}
+                                </td>
                                 <td>{{ new Date(food.created_at).toLocaleTimeString("ja-JP") }}</td>
                                 <td>
                                     <div class="grid grid-cols-1 gap-2">

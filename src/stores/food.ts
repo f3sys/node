@@ -9,7 +9,7 @@ export const useFoodStore = defineStore("food", () => {
     const quantity = ref<number>(0)
     const count = ref<number>(0)
     const counts = ref<Array<{ id: number, name: string, count: number, quantity: number, price: number }>>([])
-    const table = ref<Array<{ id: number, f3sid: string, food_id: number, food_name: string, quantity: number, price: string, created_at: string }>>([])
+    const table = ref<Array<{ id: number, f3sid: string, food_id: number, food_name: string, quantity: number, price: number, created_at: string }>>([])
     const line_graph_data = ref<Array<{ label: string, data: number[] }>>([])
 
     function clear() {
