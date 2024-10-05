@@ -60,7 +60,7 @@ const onSubmit = async () => {
     if (sendFoodResult) {
         const [tableFoodResult] = await Promise.all([
             entryStore.getTable(),
-            // entryStore.getCount(),
+            entryStore.getCount(),
             entryStore.getEntryCount(),
             entryStore.getData()
         ]);
@@ -73,10 +73,10 @@ const onSubmit = async () => {
 }
 
 const donutLabels = computed(() => {
-    return entryStore.entries_count.map(entry => entry.type)
+    return entryStore.counts.map(entry => entry.type)
 })
 const donutCountDataset = computed(() => {
-    return entryStore.entries_count.map(entry => entry.count)
+    return entryStore.counts.map(entry => entry.count)
 })
 
 let lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
@@ -88,12 +88,15 @@ let lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
     return acc;
 }, []);
 
-onMounted(async () => {
-    await Promise.all([
-        entryStore.getData(),
-        entryStore.getEntryCount(),
-        entryStore.getTable()
-    ])
+onMounted(() => {
+    (async () => {
+        await Promise.all([
+            entryStore.getData(),
+            entryStore.getEntryCount(),
+            entryStore.getCount(),
+            entryStore.getTable()
+        ])
+    })()
 })
 </script>
 
@@ -138,7 +141,7 @@ onMounted(async () => {
                 </article>
             </div>
             <div class="Stats">
-                <article>
+                <article class="text-nowrap">
                     <header>
                         <hgroup class="mb-0">
                             <h2>統計</h2>
@@ -153,7 +156,7 @@ onMounted(async () => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="entry in entryStore.entries_count">
+                            <tr v-for="entry in entryStore.counts">
                                 <th scope="row">
                                     {{
                                         entry.type
@@ -171,8 +174,7 @@ onMounted(async () => {
                                 <th scope="row">Total</th>
                                 <td>
                                     {{
-                                        entryStore.entries_count.reduce((acc, entry) => acc + entry.count,
-                                            0).toLocaleString("ja-JP")
+                                        entryStore.count.toLocaleString("ja-JP")
                                     }}
                                 </td>
                             </tr>
@@ -181,7 +183,7 @@ onMounted(async () => {
                 </article>
             </div>
             <div class="Table">
-                <article>
+                <article class="text-nowrap">
                     <header>
                         <hgroup class="mb-0">
                             <h2>表</h2>
@@ -197,10 +199,10 @@ onMounted(async () => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="entry in entryStore.entries_table">
+                            <tr v-for="entry in entryStore.table">
                                 <th scope="row">{{ entry.f3sid }}</th>
                                 <td>{{ entry.type }}</td>
-                                <td>{{ entry.created_at }}</td>
+                                <td>{{ new Date(entry.created_at).toLocaleTimeString("ja-JP") }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -210,79 +212,75 @@ onMounted(async () => {
                 <article>
                     <header>
                         <hgroup class="mb-0">
-                            <h2>ドーナツグラフ</h2>
-                            <p>Doughnut Chart</p>
+                            <h2>種別人数割合</h2>
+                            <p>Percentage of total count by type</p>
                         </hgroup>
                     </header>
-                    <div>
-                        <Doughnut :data="{
-                            labels: donutLabels,
-                            datasets: [{
-                                label: 'Count',
-                                data: donutCountDataset,
-                            }]
-                        }" :options="{
-                            animation: false,
-                            plugins: {
-                                colors: {
-                                    forceOverride: true
-                                },
-                                legend: {
-                                    labels: {
-                                        font: {
-                                            size: 15
-                                        }
+                    <Doughnut :data="{
+                        labels: donutLabels,
+                        datasets: [{
+                            label: 'Count',
+                            data: donutCountDataset,
+                        }]
+                    }" :options="{
+                        animation: false,
+                        plugins: {
+                            colors: {
+                                forceOverride: true
+                            },
+                            legend: {
+                                labels: {
+                                    font: {
+                                        size: 15
                                     }
                                 }
                             }
-                        }" />
-                    </div>
+                        }
+                    }" />
                 </article>
             </div>
             <div class="Line-Chart">
                 <article>
                     <header>
                         <hgroup class="mb-0">
-                            <h2>折れ線グラフ</h2>
-                            <p>Line Chart</p>
+                            <h2>時間における回数のグラフ</h2>
+                            <p>The graph of count vs time</p>
                         </hgroup>
                     </header>
-                    <div>
-                        <Line :data="{
-                            labels: lineLabels,
-                            datasets: entryStore.entries_line_graph_data
-                        }" :options="{
-                            animation: false,
-                            plugins: {
-                                colors: {
-                                    forceOverride: true
-                                },
-                                legend: {
-                                    labels: {
-                                        font: {
-                                            size: 15
-                                        }
+                    <Line :data="{
+                        labels: lineLabels,
+                        datasets: entryStore.line_graph_data
+                    }" :options="{
+                        animation: false,
+                        plugins: {
+                            colors: {
+                                forceOverride: true
+                            },
+                            legend: {
+                                labels: {
+                                    font: {
+                                        size: 15
                                     }
                                 }
-                            },
-                            scales: {
-                                x: {
-                                    ticks: {
-                                        font: {
-                                            size: 12
-                                        }
-                                    },
-                                },
-                                y: {
-                                    ticks: {
-                                        font: {
-                                            size: 12
-                                        }
-                                    },
-                                }
                             }
-                        }" />
-                    </div>
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                            },
+                            y: {
+                                ticks: {
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                            }
+                        }
+                    }" />
                 </article>
             </div>
         </div>
@@ -308,7 +306,7 @@ onMounted(async () => {
 <style lang="css" scoped>
 .parent {
     display: grid;
-    grid-template-columns: 0.8fr 1.2fr;
+    grid-template-columns: 1fr 1.5fr;
     grid-template-rows: auto auto auto;
     gap: 0em 1em;
     grid-auto-flow: row;

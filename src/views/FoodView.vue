@@ -3,7 +3,7 @@ import { type DetectedBarcode } from "barcode-detector/pure";
 import { ArcElement, CategoryScale, Chart as ChartJS, Colors, Legend, LinearScale, LineElement, PointElement, Tooltip } from 'chart.js';
 import { Check, Pencil, ScanQrCode, Send, X } from "lucide-vue-next";
 import Sqids from "sqids";
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { Doughnut, Line } from "vue-chartjs";
 import { QrcodeStream } from 'vue-qrcode-reader';
 import { useFoodStore } from '../stores/food';
@@ -20,6 +20,8 @@ ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointE
 //     'rgb(201, 203, 207)' // grey
 // ];
 const MAX_LABELS = 21;
+
+const total_price = ref("")
 
 const nodeStore = useNodeStore()
 const foodStore = useFoodStore()
@@ -46,13 +48,14 @@ const sqids = new Sqids({
 })
 
 const editingFoods = ref(new Map<number, boolean>(
-    foodStore.foods_table.map(food => [food.id, false])
+    foodStore.table.map(food => [food.id, false])
 ));
 
-const selectedFoods = ref(new Map(foodStore.foods.map(food => [
-    food.id,
-    { name: food.name, isSelected: false, quantity: 1 }
-])));
+const selectedFoods = ref<Map<number, {
+    name: string;
+    isSelected: boolean;
+    quantity: number;
+}>>(new Map());
 
 const price = computed(() => {
     return Array.from(selectedFoods.value.entries())
@@ -82,9 +85,10 @@ const onClickSave = (async (id: number) => {
     if (updateFoodResult) {
         const [tableFoodResult] = await Promise.all([
             foodStore.getTable(),
-            // foodStore.getCount(),
+            foodStore.getQuantity(),
+            foodStore.getCount(),
             foodStore.getFoodCount(),
-            foodStore.getData()
+            foodStore.getData(),
         ]);
 
         if (tableFoodResult) {
@@ -152,9 +156,10 @@ const onSubmit = async () => {
     if (sendFoodResult) {
         const [tableFoodResult] = await Promise.all([
             foodStore.getTable(),
-            // foodStore.getCount(),
+            foodStore.getQuantity(),
+            foodStore.getCount(),
             foodStore.getFoodCount(),
-            foodStore.getData()
+            foodStore.getData(),
         ]);
         if (tableFoodResult) {
             f3sid.value = '';
@@ -169,13 +174,13 @@ const onSubmit = async () => {
 }
 
 const donutLabels = computed(() =>
-    foodStore.foods_count.map(food => food.name)
+    foodStore.counts.map(food => food.name)
 );
 const donutCountDatas = computed(() =>
-    foodStore.foods_count.map(food => food.count)
+    foodStore.counts.map(food => food.count)
 );
 const donutQuantityDatas = computed(() =>
-    foodStore.foods_count.map(food => food.quantity)
+    foodStore.counts.map(food => food.quantity)
 );
 
 let lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
@@ -186,6 +191,26 @@ let lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
     }
     return acc;
 }, []);
+
+onMounted(() => {
+    (async () => {
+        await Promise.all([
+            foodStore.getFoods(),
+            foodStore.getData(),
+            foodStore.getQuantity(),
+            foodStore.getFoodCount(),
+            foodStore.getCount(),
+            foodStore.getTable()
+        ])
+
+        total_price.value = foodStore.counts.reduce((acc, food) => acc + food.price * food.quantity, 0).toLocaleString("ja-JP", { style: "currency", currency: "JPY" });
+
+        selectedFoods.value = new Map(foodStore.foods.map(food => [
+            food.id,
+            { name: food.name, isSelected: false, quantity: 1 }
+        ]));
+    })()
+})
 </script>
 
 <template>
@@ -218,10 +243,10 @@ let lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
                             </label>
                             <fieldset :aria-invalid="foodInvalid" aria-describedby="food-helper">
                                 <legend>Foods:</legend>
-                                <template v-for="food in foodStore.foods" :key="food.id">
-                                    <input type="checkbox" :id="food.id.toString()" :name="food.name"
-                                        v-model="selectedFoods.get(food.id)!.isSelected" />
-                                    <label :for="food.id.toString()">{{ food.name }}</label>
+                                <template v-for="food in selectedFoods" :key="food[0]">
+                                    <input type="checkbox" :id="food[0].toString()" :name="food[1].name"
+                                        v-model="food[1].isSelected" />
+                                    <label :for="food[0].toString()">{{ food[1].name }}</label>
                                 </template>
                             </fieldset>
                             <small v-if="foodInvalid" id="food-helper">
@@ -251,99 +276,96 @@ let lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
                 </article>
             </div>
             <div class="Stats">
-                <article>
+                <article class="text-nowrap">
                     <header>
                         <hgroup class="mb-0">
                             <h2>統計</h2>
                             <p>Stats</p>
                         </hgroup>
                     </header>
-                    <table class="striped mb-0">
-                        <thead>
-                            <tr>
-                                <th scope="col">Name</th>
-                                <th scope="col">Price</th>
-                                <th scope="col">Count</th>
-                                <th scope="col">Quantity</th>
-                                <th scope="col">Total Price</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="food in foodStore.foods_count">
-                                <th scope="row" class="text-sm">{{ food.name }}</th>
-                                <td>
-                                    {{
-                                        foodStore.foods.find(f => f.id === food.id)?.price.toLocaleString("ja-JP",
-                                            {
-                                                style: "currency", currency: "JPY"
+                    <div>
+                        <table class="striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">名前</th>
+                                    <th scope="col">値段</th>
+                                    <th scope="col">回数</th>
+                                    <th scope="col">個数</th>
+                                    <th scope="col">総額</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="food in foodStore.counts">
+                                    <th scope="row" class="text-sm">{{ food.name }}</th>
+                                    <td>
+                                        {{
+                                            food.price.toLocaleString("ja-JP", {
+                                                style: "currency",
+                                                currency: "JPY"
                                             })
-                                    }}
-                                </td>
-                                <td>
-                                    {{ food.count }}
-                                </td>
-                                <td>
-                                    {{ food.quantity }}
-                                </td>
-                                <td>
-                                    {{
-                                        (food.count * (foodStore.foods.find(f => f.id === food.id)?.price ??
-                                            0)).toLocaleString("ja-JP",
-                                                {
-                                                    style: "currency", currency: "JPY"
-                                                })
-                                    }}
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <th scope="row" colspan="2" class="text-align-center">Total</th>
-                                <td>
-                                    {{
-                                        foodStore.foods_count.reduce((acc, food) => acc + food.count, 0)
-                                    }}
-                                </td>
-                                <td>
-                                    {{
-                                        foodStore.foods_count.reduce((acc, food) => acc + food.quantity, 0)
-                                    }}
-                                </td>
-                                <td>
-                                    {{
-                                        foodStore.foods_count.reduce((acc, food) => acc + food.count *
-                                            foodStore.foods.find(f => f.id
-                                                === food.id)!.price, 0).toLocaleString("ja-JP", {
-                                                    style: "currency", currency: "JPY"
-                                                })
-                                    }}
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                                        }}
+                                    </td>
+                                    <td>
+                                        {{ food.count }}
+                                    </td>
+                                    <td>
+                                        {{ food.quantity }}
+                                    </td>
+                                    <td>
+                                        {{
+                                            (food.quantity * food.price).toLocaleString("ja-JP", {
+                                                style: "currency",
+                                                currency: "JPY"
+                                            })
+                                        }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th scope="row" colspan="2" class="text-align-center">合計</th>
+                                    <td>
+                                        {{
+                                            foodStore.count
+                                        }}
+                                    </td>
+                                    <td>
+                                        {{
+                                            foodStore.quantity
+                                        }}
+                                    </td>
+                                    <td>
+                                        {{
+                                            total_price
+                                        }}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
                 </article>
             </div>
             <div class="Table">
-                <article>
+                <article class="text-nowrap">
                     <header>
                         <hgroup class="mb-0">
                             <h2>表</h2>
                             <p>Table</p>
                         </hgroup>
                     </header>
-                    <table class="striped mb-0 !table-fixed">
+                    <table class="striped mb-0">
                         <thead>
                             <tr>
                                 <th scope="col">F3SiD</th>
-                                <th scope="col">Name</th>
-                                <th scope="col">Count</th>
-                                <th scope="col">Price</th>
-                                <th scope="col">Bought At</th>
+                                <th scope="col">名前</th>
+                                <th scope="col">回数</th>
+                                <th scope="col">値段</th>
+                                <th scope="col">購入時刻</th>
                                 <th scope="col" class="text-center">Edit</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="food in foodStore.foods_table">
+                            <tr v-for="food in foodStore.table">
                                 <th scope="row">{{ food.f3sid }}</th>
                                 <td v-if="editingFoods.get(food.id)">
                                     <select :disabled="editIsLoading" name="newFoodId" v-model="newFoodId"
@@ -361,19 +383,19 @@ let lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
                                 </td>
                                 <td v-else>{{ food.quantity }}</td>
                                 <td>{{ food.price }}</td>
-                                <td>{{ food.created_at }}</td>
+                                <td>{{ new Date(food.created_at).toLocaleTimeString("ja-JP") }}</td>
                                 <td>
                                     <div class="grid grid-cols-1 gap-2">
-                                        <button v-if="editingFoods.get(food.id)" @click="onClickCancel(food.id)"
-                                            :disabled="editIsLoading"
-                                            class="flex items-center justify-center size-8 p-0 mr-auto outline secondary">
-                                            <X class="m-1 size-5" />
-                                        </button>
-                                        <button v-if="editingFoods.get(food.id)" @click="onClickSave(food.id)"
-                                            :disabled="editIsLoading"
-                                            class="flex items-center justify-center size-8 p-0 outline">
-                                            <Check class="m-1 size-5" />
-                                        </button>
+                                        <template v-if="editingFoods.get(food.id)">
+                                            <button @click="onClickCancel(food.id)" :disabled="editIsLoading"
+                                                class="flex items-center justify-center size-8 p-0 mr-auto outline secondary">
+                                                <X class="m-1 size-5" />
+                                            </button>
+                                            <button @click="onClickSave(food.id)" :disabled="editIsLoading"
+                                                class="flex items-center justify-center size-8 p-0 outline">
+                                                <Check class="m-1 size-5" />
+                                            </button>
+                                        </template>
                                         <button v-else @click="onClickEdit(food)" :disabled="editIsLoading"
                                             class="flex items-center justify-center size-8 p-0 mx-auto outline contrast">
                                             <Pencil class="m-2 size-3" />
@@ -389,84 +411,80 @@ let lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
                 <article>
                     <header>
                         <hgroup class="mb-0">
-                            <h2>ドーナツグラフ</h2>
-                            <p>Doughnut Chart</p>
+                            <h2>セット別売上割合</h2>
+                            <p>Percentage of total count and quantity by set</p>
                         </hgroup>
                     </header>
-                    <div>
-                        <Doughnut :data="{
-                            labels: donutLabels,
-                            datasets: [{
-                                label: 'Quantity',
-                                data: donutQuantityDatas,
-                                // backgroundColor: [...BORDER_COLORS.slice(0, donutCountDatas.length)],
-                            }, {
-                                label: 'Count',
-                                data: donutCountDatas,
-                                // backgroundColor: [...BORDER_COLORS.slice(0, donutCountDatas.length)],
-                            }]
-                        }" :options="{
-                            animation: false,
-                            plugins: {
-                                // colors: {
-                                // forceOverride: true
-                                // },
-                                legend: {
-                                    labels: {
-                                        font: {
-                                            size: 15
-                                        }
+                    <Doughnut :data="{
+                        labels: donutLabels,
+                        datasets: [{
+                            label: 'Count',
+                            data: donutCountDatas,
+                            // backgroundColor: [...BORDER_COLORS.slice(0, donutCountDatas.length)],
+                        }, {
+                            label: 'Quantity',
+                            data: donutQuantityDatas,
+                            // backgroundColor: [...BORDER_COLORS.slice(0, donutCountDatas.length)],
+                        }]
+                    }" :options="{
+                        animation: false,
+                        plugins: {
+                            colors: {
+                                forceOverride: true
+                            },
+                            legend: {
+                                labels: {
+                                    font: {
+                                        size: 15
                                     }
                                 }
                             }
-                        }" />
-                    </div>
+                        }
+                    }" />
                 </article>
             </div>
             <div class="Line-Chart">
                 <article>
                     <header>
                         <hgroup class="mb-0">
-                            <h2>折れ線グラフ</h2>
-                            <p>Line Chart</p>
+                            <h2>時間における回数と個数のグラフ</h2>
+                            <p>The graph of count and quantity vs time</p>
                         </hgroup>
                     </header>
-                    <div>
-                        <Line :data="{
-                            labels: lineLabels,
-                            datasets: foodStore.foods_line_graph_data
-                        }" :options="{
-                            animation: false,
-                            plugins: {
-                                colors: {
-                                    forceOverride: true
-                                },
-                                legend: {
-                                    labels: {
-                                        font: {
-                                            size: 15
-                                        }
+                    <Line :data="{
+                        labels: lineLabels,
+                        datasets: foodStore.line_graph_data
+                    }" :options="{
+                        animation: false,
+                        plugins: {
+                            colors: {
+                                forceOverride: true
+                            },
+                            legend: {
+                                labels: {
+                                    font: {
+                                        size: 15
                                     }
                                 }
-                            },
-                            scales: {
-                                x: {
-                                    ticks: {
-                                        font: {
-                                            size: 12
-                                        }
-                                    },
-                                },
-                                y: {
-                                    ticks: {
-                                        font: {
-                                            size: 12
-                                        }
-                                    },
-                                }
                             }
-                        }" />
-                    </div>
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                            },
+                            y: {
+                                ticks: {
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                            }
+                        }
+                    }" />
                 </article>
             </div>
         </div>
@@ -492,7 +510,7 @@ let lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
 <style lang="css" scoped>
 .parent {
     display: grid;
-    grid-template-columns: 0.7fr 1.3fr;
+    grid-template-columns: min-content min-content;
     grid-template-rows: auto auto auto;
     gap: 0em 1em;
     grid-auto-flow: row;

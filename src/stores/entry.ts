@@ -5,18 +5,16 @@ import { useNodeStore } from "./node"
 const nodeStore = useNodeStore()
 
 export const useEntryStore = defineStore("entry", () => {
-    const entries_count = ref<Array<{ type: string, count: number }>>([])
-    const entries_table = ref<Array<{ id: number, f3sid: string, type: string, created_at: string }>>([])
-    // const entries_line_graph_data = ref<Array<{ name: string, entries: Array<{ count: number, hour: number, minute: number }> }>>([])
-    const entries_line_graph_data = ref<Array<{ label: string, data: number[] }>>([])
-    const MAX_LABELS = 21;
-
-    // const count = ref<number>(0)
+    const count = ref<number>(0)
+    const counts = ref<Array<{ type: string, count: number }>>([])
+    const table = ref<Array<{ id: number, f3sid: string, type: string, created_at: string }>>([])
+    const line_graph_data = ref<Array<{ label: string, data: number[] }>>([])
 
     function clear() {
-        entries_count.value = []
-        entries_table.value = []
-        entries_line_graph_data.value = []
+        count.value = 0
+        counts.value = []
+        table.value = []
+        line_graph_data.value = []
     }
 
     async function sendEntry(f3sid: string): Promise<boolean> {
@@ -48,17 +46,7 @@ export const useEntryStore = defineStore("entry", () => {
                 headers: headers,
             }).then((r) => r.json());
 
-            entries_table.value = []
-
-            data.forEach((entry: { id: number, f3sid: string, type: string, created_at: string }) => {
-                const date = new Date(entry.created_at)
-                entries_table.value.push({
-                    id: entry.id,
-                    f3sid: entry.f3sid,
-                    type: entry.type,
-                    created_at: date.toLocaleTimeString("ja-JP")
-                })
-            })
+            table.value = data
 
             return true
         } catch (e) {
@@ -66,24 +54,24 @@ export const useEntryStore = defineStore("entry", () => {
         }
     }
 
-    // async function getCount(): Promise<boolean> {
-    //     const headers = new Headers();
-    //     headers.append("Authorization", "Bearer " + nodeStore.key)
-    //     headers.append("Content-Type", "application/json")
-    //     const url = import.meta.env.VITE_API_URL
-    //     try {
-    //         const data = await fetch(url + "protected/" + "count", {
-    //             method: "GET",
-    //             headers: headers,
-    //         }).then((r) => r.json())
+    async function getCount(): Promise<boolean> {
+        const headers = new Headers();
+        headers.append("Authorization", "Bearer " + nodeStore.key)
+        headers.append("Content-Type", "application/json")
+        const url = import.meta.env.VITE_API_URL
+        try {
+            const data = await fetch(url + "protected/" + "count", {
+                method: "GET",
+                headers: headers,
+            }).then((r) => r.json())
 
-    //         count.value = data.count
+            count.value = data.count
 
-    //         return true
-    //     } catch (e) {
-    //         return false
-    //     }
-    // }
+            return true
+        } catch (e) {
+            return false
+        }
+    }
 
     async function getEntryCount(): Promise<boolean> {
         const headers = new Headers();
@@ -96,11 +84,7 @@ export const useEntryStore = defineStore("entry", () => {
                 headers: headers,
             }).then((r) => r.json())
 
-            entries_count.value = []
-
-            data.forEach((entry: { type: string, count: number }) => {
-                entries_count.value.push({ type: entry.type, count: entry.count })
-            })
+            counts.value = data
 
             return true
         } catch (e) {
@@ -108,12 +92,12 @@ export const useEntryStore = defineStore("entry", () => {
         }
     }
 
-    function hour(i: number): number {
-        return Math.floor(i / 2) + 8;
-    }
-    function minute(i: number): number {
-        return (i % 2) * 30;
-    }
+    // function hour(i: number): number {
+    //     return Math.floor(i / 2) + 8;
+    // }
+    // function minute(i: number): number {
+    //     return (i % 2) * 30;
+    // }
     async function getData(): Promise<boolean> {
         const headers = new Headers()
         headers.append("Authorization", "Bearer " + nodeStore.key)
@@ -125,24 +109,24 @@ export const useEntryStore = defineStore("entry", () => {
                 headers: headers,
             }).then((r) => r.json())
 
-            const formattedData: Array<{
-                name: string,
-                entries: {
-                    count: number;
-                    hour: number;
-                    minute: number;
-                }[];
-            }> = data;
+            // const formattedData: Array<{
+            //     name: string,
+            //     entries: {
+            //         count: number;
+            //         hour: number;
+            //         minute: number;
+            //     }[];
+            // }> = data;
 
-            const datasets = formattedData.map(entry => ({
-                label: entry.name,
-                data: Array.from({ length: MAX_LABELS }, (_, i) => {
-                    const data = entry.entries.find(e => e.hour === hour(i) && e.minute === minute(i));
-                    return data ? data.count : 0;
-                }),
-            }));
+            // const datasets = formattedData.map(entry => ({
+            //     label: entry.name,
+            //     data: Array.from({ length: MAX_LABELS }, (_, i) => {
+            //         const data = entry.entries.find(e => e.hour === hour(i) && e.minute === minute(i));
+            //         return data ? data.count : 0;
+            //     }),
+            // }));
 
-            entries_line_graph_data.value = datasets;
+            line_graph_data.value = data;
 
             return true
         } catch (e) {
@@ -151,13 +135,13 @@ export const useEntryStore = defineStore("entry", () => {
     }
 
     return {
-        entries_count,
-        entries_table,
-        entries_line_graph_data,
-        // count,
+        counts,
+        table,
+        line_graph_data,
+        count,
         sendEntry,
         getTable,
-        // getCount,
+        getCount,
         getEntryCount,
         getData,
         clear

@@ -5,12 +5,14 @@ import { useNodeStore } from "./node"
 const nodeStore = useNodeStore()
 
 export const useExhibitionStore = defineStore("exhibition", () => {
-    const exhibitions_table = ref<Array<{ id: number, f3sid: string, created_at: string }>>([])
-
     const count = ref<number>(0)
+    const table = ref<Array<{ id: number, f3sid: string, created_at: string }>>([])
+    const line_graph_data = ref<Array<{ label: string, data: number[] }>>([])
 
     function clear() {
-        exhibitions_table.value = []
+        count.value = 0
+        table.value = []
+        line_graph_data.value = []
     }
 
     async function sendExhibition(f3sid: string): Promise<boolean> {
@@ -42,16 +44,16 @@ export const useExhibitionStore = defineStore("exhibition", () => {
                 headers: headers,
             }).then((r) => r.json());
 
-            exhibitions_table.value = []
+            table.value = data
 
-            data.forEach((food: { id: number, f3sid: string, created_at: string }) => {
-                const date = new Date(food.created_at)
-                exhibitions_table.value.push({
-                    id: food.id,
-                    f3sid: food.f3sid,
-                    created_at: date.toLocaleTimeString("ja-JP")
-                })
-            })
+            // data.forEach((food: { id: number, f3sid: string, created_at: string }) => {
+            //     const date = new Date(food.created_at)
+            //     exhibitions_table.value.push({
+            //         id: food.id,
+            //         f3sid: food.f3sid,
+            //         created_at: date.toLocaleTimeString("ja-JP")
+            //     })
+            // })
 
             return true
         } catch (e) {
@@ -78,33 +80,33 @@ export const useExhibitionStore = defineStore("exhibition", () => {
         }
     }
 
-    async function sendReview(f3sid: string, rating: number): Promise<boolean> {
-        const headers = new Headers();
-        headers.append("Authorization", "Bearer " + nodeStore.key);
-        headers.append("Content-Type", "application/json");
-        const url = import.meta.env.VITE_API_URL;
+    async function getData(): Promise<boolean> {
+        const headers = new Headers()
+        headers.append("Authorization", "Bearer " + nodeStore.key)
+        headers.append("Content-Type", "application/json")
+        const url = import.meta.env.VITE_API_URL
         try {
-            const data = await fetch(url + "protected/" + "review/" + "exhibition", {
-                method: "POST",
+            const data = await fetch(url + "protected/" + "data/" + "exhibition", {
+                method: "GET",
                 headers: headers,
-                body: JSON.stringify({ f3sid, rating })
-            });
+            }).then((r) => r.json())
 
-            return data.ok
+            line_graph_data.value = data;
+
+            return true
         } catch (e) {
             return false
         }
     }
 
     return {
-        exhibitions_table,
+        table,
         count,
+        line_graph_data,
         sendExhibition,
-        sendReview,
         getTable,
         getCount,
+        getData,
         clear
     }
-}, {
-    persist: true,
 })

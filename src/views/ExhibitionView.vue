@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { type DetectedBarcode } from "barcode-detector/pure";
+import { ArcElement, CategoryScale, Chart as ChartJS, Colors, Legend, LinearScale, LineElement, PointElement, Tooltip } from 'chart.js';
 import { ScanQrCode, Send } from "lucide-vue-next";
 import Sqids from "sqids";
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
+import { Line } from "vue-chartjs";
 import { QrcodeStream } from 'vue-qrcode-reader';
 import { useExhibitionStore } from "../stores/exhibition";
 import { useNodeStore } from '../stores/node';
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Colors)
+const MAX_LABELS = 21
 
 const nodeStore = useNodeStore()
 const exhibitionStore = useExhibitionStore()
@@ -57,6 +61,7 @@ const onSubmit = async () => {
         const [tableFoodResult] = await Promise.all([
             exhibitionStore.getTable(),
             exhibitionStore.getCount(),
+            exhibitionStore.getData(),
         ]);
         if (tableFoodResult) {
             f3sid.value = '';
@@ -65,6 +70,25 @@ const onSubmit = async () => {
 
     isLoading.value = false;
 }
+
+let lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
+    if (i % 2 === 0) {
+        acc.push((i / 2 + 8).toString().padStart(2, '0') + ":00");
+    } else {
+        acc.push((Math.floor(i / 2) + 8).toString().padStart(2, '0') + ":30");
+    }
+    return acc;
+}, []);
+
+onMounted(() => {
+    (async () => {
+        await Promise.all([
+            exhibitionStore.getData(),
+            exhibitionStore.getCount(),
+            exhibitionStore.getTable(),
+        ])
+    })()
+})
 </script>
 
 <template>
@@ -151,12 +175,56 @@ const onSubmit = async () => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="exhibition in exhibitionStore.exhibitions_table">
+                            <tr v-for="exhibition in exhibitionStore.table">
                                 <th scope="row">{{ exhibition.f3sid }}</th>
-                                <td>{{ exhibition.created_at }}</td>
+                                <td>{{ new Date(exhibition.created_at).toLocaleTimeString("ja-JP") }}</td>
                             </tr>
                         </tbody>
                     </table>
+                </article>
+            </div>
+            <div class="Line-Chart">
+                <article>
+                    <header>
+                        <hgroup class="mb-0">
+                            <h2>時間における回数のグラフ</h2>
+                            <p>The graph of count vs time</p>
+                        </hgroup>
+                    </header>
+                    <Line :data="{
+                        labels: lineLabels,
+                        datasets: exhibitionStore.line_graph_data
+                    }" :options="{
+                        animation: false,
+                        plugins: {
+                            colors: {
+                                forceOverride: true
+                            },
+                            legend: {
+                                labels: {
+                                    font: {
+                                        size: 15
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                            },
+                            y: {
+                                ticks: {
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                            }
+                        }
+                    }" />
                 </article>
             </div>
         </div>
@@ -179,16 +247,18 @@ const onSubmit = async () => {
     </main>
 </template>
 
+
 <style lang="css" scoped>
 .parent {
     display: grid;
-    grid-template-columns: 0.7fr 1.3fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 1fr 1.5fr;
+    grid-template-rows: auto auto auto;
     gap: 0em 1em;
     grid-auto-flow: row;
     grid-template-areas:
         "Order Table"
-        "Stats Table";
+        "Stats Table"
+        "Line-Chart Line-Chart";
 }
 
 .Order {
@@ -201,5 +271,9 @@ const onSubmit = async () => {
 
 .Table {
     grid-area: Table;
+}
+
+.Line-Chart {
+    grid-area: Line-Chart;
 }
 </style>
