@@ -152,7 +152,7 @@ onMounted(() => {
                 </article>
             </div>
             <div class="Table">
-                <article>
+                <article style="zoom: 1.1;">
                     <header>
                         <hgroup class="mb-0">
                             <h2>表</h2>
@@ -176,7 +176,7 @@ onMounted(() => {
                 </article>
             </div>
             <div class="Line-Chart">
-                <article>
+                <article style="zoom: 1.1;">
                     <header>
                         <hgroup class="mb-0">
                             <h2>時間における回数のグラフ</h2>
@@ -243,7 +243,7 @@ onMounted(() => {
 <style lang="css" scoped>
 .parent {
     display: grid;
-    grid-template-columns: 1fr 1.5fr;
+    grid-template-columns: auto auto;
     grid-template-rows: auto auto auto;
     gap: 0em 1em;
     grid-auto-flow: row;

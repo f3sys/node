@@ -345,7 +345,7 @@ onMounted(() => {
                         <thead>
                             <tr>
                                 <th scope="col">F3SiD</th>
-                                <th scope="col">名前</th>
+                                <th scope="col">商品</th>
                                 <th scope="col">回数</th>
                                 <th scope="col">値段</th>
                                 <th scope="col">購入時刻</th>
@@ -355,7 +355,7 @@ onMounted(() => {
                         <tbody>
                             <tr v-for="food in foodStore.table">
                                 <th scope="row">{{ food.f3sid }}</th>
-                                <td v-if="editingFoods.get(food.id)">
+                                <td  v-if="editingFoods.get(food.id)">
                                     <select :disabled="editIsLoading" name="newFoodId" v-model="newFoodId"
                                         class="!mb-0 !py-0 !h-8" required>
                                         <option v-for="foodStoreFood in foodStore.foods" :value="foodStoreFood.id"
@@ -403,7 +403,7 @@ onMounted(() => {
                 </article>
             </div>
             <div class="Donut-Chart">
-                <article>
+                <article style="zoom: 1.1;">
                     <header>
                         <hgroup class="mb-0">
                             <h2>セット別売上割合</h2>
@@ -439,7 +439,7 @@ onMounted(() => {
                 </article>
             </div>
             <div class="Line-Chart">
-                <article>
+                <article style="zoom: 1.1;">
                     <header>
                         <hgroup class="mb-0">
                             <h2>時間における回数と個数のグラフ</h2>
@@ -505,7 +505,7 @@ onMounted(() => {
 <style lang="css" scoped>
 .parent {
     display: grid;
-    grid-template-columns: min-content min-content;
+    grid-template-columns: 1fr 1.5fr;
     grid-template-rows: auto auto auto;
     gap: 0em 1em;
     grid-auto-flow: row;

@@ -199,7 +199,7 @@ onMounted(() => {
                 </article>
             </div>
             <div class="Donut-Chart">
-                <article>
+                <article style="zoom: 1.1;">
                     <header>
                         <hgroup class="mb-0">
                             <h2>種別人数割合</h2>
@@ -230,7 +230,7 @@ onMounted(() => {
                 </article>
             </div>
             <div class="Line-Chart">
-                <article>
+                <article style="zoom: 1.1;">
                     <header>
                         <hgroup class="mb-0">
                             <h2>時間における回数のグラフ</h2>
