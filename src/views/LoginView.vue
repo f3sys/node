@@ -17,11 +17,9 @@ function toggleButton() {
 
 async function onSubmit() {
     toggleButton()
-    if (nodeStore.key === "")
-        await nodeStore.setKey();
-    if (nodeStore.key === "")
-        return;
-    await nodeStore.getNode();
+    if (nodeStore.key === "" && await nodeStore.setKey()) {
+        await nodeStore.getNode();
+    }
     window.location.reload()
     // switch (nodeStore.type) {
     //     case "FOODSTALL":

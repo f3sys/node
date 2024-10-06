@@ -6,21 +6,15 @@ export const useNodeStore = defineStore("node", () => {
     const name = ref("")
     const type = ref("")
 
-    async function setKey() {
+    async function setKey(): Promise<boolean> {
         const url = import.meta.env.VITE_API_URL;
         const response = await fetch(url + "node", {
             method: "POST",
         });
-
-        if (!response.ok) {
-            return;
-        }
-
         const data = await response.json();
 
-        if (data.key !== undefined) {
-            key.value = data.key;
-        }
+        key.value = data.key;
+        return response.ok
     }
 
     async function getNode() {
