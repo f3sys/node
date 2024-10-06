@@ -226,19 +226,19 @@ onMounted(() => {
                                     </button>
                                 </fieldset>
                                 <small v-if="f3sidInvalid" id="f3sid-helper">
-                                    Please provide a valid F3SiD!
+                                    F3SiDが無効です
                                 </small>
                             </label>
                             <fieldset :aria-invalid="foodInvalid" aria-describedby="food-helper">
                                 <legend>商品:</legend>
-                                <template v-for="food in selectedFoods" :key="food[0]">
+                                <template v-for="food in selectedFoods" :key="food[0].toString()">
                                     <input type="checkbox" :id="food[0].toString()" :name="food[1].name"
                                         v-model="food[1].isSelected" />
                                     <label :for="food[0].toString()">{{ food[1].name }}</label>
                                 </template>
                             </fieldset>
                             <small v-if="foodInvalid" id="food-helper">
-                                Please select a food!
+                                商品を選択してください
                             </small>
                             <template v-for="food in selectedFoods" :key="food[0]">
                                 <label v-if="food[1].isSelected">
@@ -257,7 +257,7 @@ onMounted(() => {
                             :disabled="isLoading">
                             <div class="flex items-center mx-auto">
                                 <Send class="size-4 mr-1" />
-                                <span class="text-size-lg">Send</span>
+                                <span class="text-size-lg">送信する</span>
                             </div>
                         </button>
                     </form>
@@ -275,7 +275,7 @@ onMounted(() => {
                         <table class="striped mb-0">
                             <thead>
                                 <tr>
-                                    <th scope="col">名前</th>
+                                    <th scope="col">商品名</th>
                                     <th scope="col">値段</th>
                                     <th scope="col">回数</th>
                                     <th scope="col">個数</th>
@@ -345,17 +345,17 @@ onMounted(() => {
                         <thead>
                             <tr>
                                 <th scope="col">F3SiD</th>
-                                <th scope="col">商品</th>
+                                <th scope="col">商品名</th>
                                 <th scope="col">回数</th>
                                 <th scope="col">値段</th>
                                 <th scope="col">購入時刻</th>
-                                <th scope="col" class="text-center">Edit</th>
+                                <th scope="col" class="text-center">編集</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="food in foodStore.table">
                                 <th scope="row">{{ food.f3sid }}</th>
-                                <td  v-if="editingFoods.get(food.id)">
+                                <td v-if="editingFoods.get(food.id)">
                                     <select :disabled="editIsLoading" name="newFoodId" v-model="newFoodId"
                                         class="!mb-0 !py-0 !h-8" required>
                                         <option v-for="foodStoreFood in foodStore.foods" :value="foodStoreFood.id"
@@ -371,11 +371,11 @@ onMounted(() => {
                                 </td>
                                 <td v-else>{{ food.quantity }}</td>
                                 <td>
-                                    {{ 
+                                    {{
                                         (food.price * food.quantity).toLocaleString("ja-JP", {
                                             style: "currency",
                                             currency: "JPY"
-                                        }) 
+                                        })
                                     }}
                                 </td>
                                 <td>{{ new Date(food.created_at).toLocaleTimeString("ja-JP") }}</td>

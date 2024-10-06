@@ -115,7 +115,7 @@ onMounted(() => {
                                     </button>
                                 </fieldset>
                                 <small v-if="f3sidInvalid" id="f3sid-helper">
-                                    Please provide a valid F3SiD!
+                                    F3SiDが無効です
                                 </small>
                             </label>
                         </fieldset>
@@ -124,7 +124,7 @@ onMounted(() => {
                             :disabled="isLoading">
                             <div class="flex items-center mx-auto">
                                 <Send class="size-4 mr-1" />
-                                <span class="text-size-lg">Send</span>
+                                <span class="text-size-lg">送信する</span>
                             </div>
                         </button>
                     </form>
@@ -141,8 +141,8 @@ onMounted(() => {
                     <table class="striped mb-0">
                         <thead>
                             <tr>
-                                <th scope="col">Type</th>
-                                <th scope="col">Count</th>
+                                <th scope="col">種類</th>
+                                <th scope="col">回数</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -161,7 +161,7 @@ onMounted(() => {
                         </tbody>
                         <tfoot>
                             <tr>
-                                <th scope="row">Total</th>
+                                <th scope="row" class="text-align-center">合計</th>
                                 <td>
                                     {{
                                         entryStore.count.toLocaleString("ja-JP")
@@ -184,8 +184,8 @@ onMounted(() => {
                         <thead>
                             <tr>
                                 <th scope="col">F3SiD</th>
-                                <th scope="col">Type</th>
-                                <th scope="col">Entered At</th>
+                                <th scope="col">種類</th>
+                                <th scope="col">時刻</th>
                             </tr>
                         </thead>
                         <tbody>

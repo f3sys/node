@@ -108,7 +108,7 @@ onMounted(() => {
                                     </button>
                                 </fieldset>
                                 <small v-if="f3sidInvalid" id="f3sid-helper">
-                                    Please provide a valid F3SiD!
+                                    F3SiDが無効です
                                 </small>
                             </label>
                         </fieldset>
@@ -117,7 +117,7 @@ onMounted(() => {
                             :disabled="isLoading">
                             <div class="flex items-center mx-auto">
                                 <Send class="size-4 mr-1" />
-                                <span class="text-size-lg">Send</span>
+                                <span class="text-size-lg">送信する</span>
                             </div>
                         </button>
                     </form>
@@ -134,8 +134,8 @@ onMounted(() => {
                     <table class="striped mb-auto">
                         <thead>
                             <tr>
-                                <th scope="col">Name</th>
-                                <th scope="col">Count</th>
+                                <th scope="col">名前</th>
+                                <th scope="col">回数</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -163,7 +163,7 @@ onMounted(() => {
                         <thead>
                             <tr>
                                 <th scope="col">F3SiD</th>
-                                <th scope="col">Entered At</th>
+                                <th scope="col">入室時刻</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -243,7 +243,7 @@ onMounted(() => {
 <style lang="css" scoped>
 .parent {
     display: grid;
-    grid-template-columns: auto auto;
+    grid-template-columns: 1fr 1.5fr;
     grid-template-rows: auto auto auto;
     gap: 0em 1em;
     grid-auto-flow: row;
