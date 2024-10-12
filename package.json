@@ -5,28 +5,39 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "build": "run-p type-check \"build-only {@}\" --",
+    "preview": "vite preview",
+    "build-only": "vite build",
+    "type-check": "vue-tsc --build --force",
+    "lint": "eslint . --fix"
   },
   "dependencies": {
-    "barcode-detector": "^2.2.8",
+    "@vueuse/core": "^11.1.0",
+    "barcode-detector": "^2.2.11",
     "chart.js": "^4.4.4",
     "lucide-vue-next": "^0.445.0",
-    "pinia": "^2.2.2",
-    "pinia-plugin-persistedstate": "^4.0.2",
+    "pinia": "^2.2.4",
+    "pinia-plugin-persistedstate": "^4.1.1",
     "sqids": "^0.3.0",
-    "vue": "^3.4.37",
+    "vue": "^3.5.12",
     "vue-chartjs": "^5.3.1",
-    "vue-qrcode-reader": "^5.5.10",
+    "vue-qrcode-reader": "^5.5.11",
     "vue-router": "^4.4.5"
   },
   "devDependencies": {
+    "@tsconfig/node20": "^20.1.4",
+    "@types/node": "^20.16.11",
     "@unocss/preset-mini": "^0.62.4",
-    "@vitejs/plugin-vue": "^5.1.2",
-    "typescript": "^5.5.3",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "@vue/eslint-config-typescript": "^14.0.1",
+    "@vue/tsconfig": "^0.5.1",
+    "eslint": "^9.12.0",
+    "eslint-plugin-vue": "^9.29.0",
+    "npm-run-all2": "^6.2.3",
+    "typescript": "~5.5.4",
     "unocss": "^0.62.4",
-    "vite": "^5.4.1",
-    "vue-tsc": "^2.0.29"
+    "vite": "^5.4.8",
+    "vue-tsc": "^2.1.6"
   },
   "packageManager": "pnpm@9.11.0+sha512.0a203ffaed5a3f63242cd064c8fb5892366c103e328079318f78062f24ea8c9d50bc6a47aa3567cabefd824d170e78fa2745ed1f16b132e16436146b7688f19b"
 }
