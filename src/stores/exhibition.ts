@@ -38,7 +38,7 @@ export const useExhibitionStore = defineStore("exhibition", () => {
             });
 
             return data.ok
-        } catch (e) {
+        } catch {
             return false
         }
     }
@@ -57,7 +57,7 @@ export const useExhibitionStore = defineStore("exhibition", () => {
             table.value = data
 
             return true
-        } catch (e) {
+        } catch {
             return false
         }
     }
@@ -76,7 +76,7 @@ export const useExhibitionStore = defineStore("exhibition", () => {
             count.value = data.count
 
             return true
-        } catch (e) {
+        } catch {
             return false
         }
     }
@@ -95,7 +95,7 @@ export const useExhibitionStore = defineStore("exhibition", () => {
             line_graph_data.value = data;
 
             return true
-        } catch (e) {
+        } catch {
             return false
         }
     }

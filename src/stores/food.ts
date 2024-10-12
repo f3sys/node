@@ -47,7 +47,7 @@ export const useFoodStore = defineStore("food", () => {
             foods.value = data
 
             return true
-        } catch (e) {
+        } catch {
             return false
         }
     }
@@ -67,7 +67,7 @@ export const useFoodStore = defineStore("food", () => {
             })
 
             return data.ok
-        } catch (e) {
+        } catch {
             return false
         }
     }
@@ -86,7 +86,7 @@ export const useFoodStore = defineStore("food", () => {
             table.value = data
 
             return true
-        } catch (e) {
+        } catch {
             return false
         }
     }
@@ -105,7 +105,7 @@ export const useFoodStore = defineStore("food", () => {
             count.value = data.count
 
             return true
-        } catch (e) {
+        } catch {
             return false
         }
     }
@@ -124,7 +124,7 @@ export const useFoodStore = defineStore("food", () => {
             quantity.value = data.quantity
 
             return true
-        } catch (e) {
+        } catch {
             return false
         }
     }
@@ -143,7 +143,7 @@ export const useFoodStore = defineStore("food", () => {
             counts.value = data
 
             return true
-        } catch (e) {
+        } catch {
             return false
         }
     }
@@ -161,7 +161,7 @@ export const useFoodStore = defineStore("food", () => {
             })
 
             return data.ok
-        } catch (e) {
+        } catch {
             return false
         }
     }
@@ -169,7 +169,6 @@ export const useFoodStore = defineStore("food", () => {
     async function getData(): Promise<boolean> {
         const headers = new Headers()
         headers.append("Authorization", "Bearer " + nodeStore.key)
-        headers.append("Content-Type", "application/json")
         const url = import.meta.env.VITE_API_URL
         try {
             const data = await fetch(url + "protected/" + "data/" + "foodstall", {
@@ -180,7 +179,7 @@ export const useFoodStore = defineStore("food", () => {
             line_graph_data.value = data;
 
             return true
-        } catch (e) {
+        } catch {
             return false
         }
     }
@@ -213,11 +212,6 @@ export const useFoodStore = defineStore("food", () => {
         line_graph_data,
         getFoods,
         sendFood,
-        getTable,
-        getCount,
-        getQuantity,
-        getFoodCount,
-        getData,
         updateFood,
         update,
         clear

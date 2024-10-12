@@ -2,6 +2,7 @@
 import { type DetectedBarcode } from "barcode-detector/pure";
 import { ArcElement, CategoryScale, Chart as ChartJS, Colors, Legend, LinearScale, LineElement, PointElement, Tooltip } from 'chart.js';
 import { Check, Pencil, ScanQrCode, Send, X } from "lucide-vue-next";
+import { useBattery, useIntervalFn } from '@vueuse/core';
 import Sqids from "sqids";
 import { computed, onMounted, ref } from 'vue';
 import { Doughnut, Line } from "vue-chartjs";
@@ -59,7 +60,7 @@ const selectedFoods = ref<Map<number, {
 
 const price = computed(() => {
     return Array.from(selectedFoods.value.entries())
-        .filter(([_, food]) => food.isSelected)
+        .filter(([, food]) => food.isSelected)
         .reduce((total, [id, food]) => {
             const foundFood = foodStore.foods.find(f => f.id === id);
             return total + (foundFood ? foundFood.price * food.quantity : 0);
@@ -140,7 +141,7 @@ const onSubmit = async () => {
     }
 
     const sendFoodResult = await foodStore.sendFood(f3sid.value, Array.from(selectedFoods.value.entries())
-        .filter(([_, food]) => food.isSelected)
+        .filter(([, food]) => food.isSelected)
         .map(([id, food]) => ({
             id: Number(id),
             quantity: Number(food.quantity)
@@ -171,7 +172,7 @@ const donutQuantityDatas = computed(() =>
     foodStore.counts.map(food => food.quantity)
 );
 
-let lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
+const lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
     if (i % 2 === 0) {
         acc.push((i / 2 + 8).toString().padStart(2, '0') + ":00");
     } else {
@@ -180,16 +181,16 @@ let lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
     return acc;
 }, []);
 
+const { charging, chargingTime, dischargingTime, level } = useBattery()
+
+const { resume, isActive } = useIntervalFn(async () => {
+    await nodeStore.sendStatus(charging.value, chargingTime.value, dischargingTime.value, level.value)
+}, 60000, { immediate: false }) // 1 minute
+
 onMounted(() => {
     (async () => {
-        await Promise.all([
-            foodStore.getFoods(),
-            foodStore.getData(),
-            foodStore.getQuantity(),
-            foodStore.getFoodCount(),
-            foodStore.getCount(),
-            foodStore.getTable()
-        ])
+        await foodStore.getFoods()
+        await foodStore.update()
 
         total_price.value = foodStore.counts.reduce((acc, food) => acc + food.price * food.quantity, 0).toLocaleString("ja-JP", { style: "currency", currency: "JPY" });
 
@@ -198,6 +199,9 @@ onMounted(() => {
             { name: food.name, isSelected: false, quantity: 1 }
         ]));
     })()
+
+    if (!isActive.value && nodeStore.canSendStatus)
+        resume()
 })
 </script>
 
@@ -217,8 +221,9 @@ onMounted(() => {
                         <fieldset :disabled="isLoading">
                             <label>
                                 F3SiD
-                                <fieldset role="group" style="margin-top: calc(var(--pico-spacing) * .25)"
-                                    :aria-invalid="f3sidInvalid" aria-describedby="f3sid-helper">
+                                <fieldset v-on:keydown.enter.prevent role="group"
+                                    style="margin-top: calc(var(--pico-spacing) * .25)" :aria-invalid="f3sidInvalid"
+                                    aria-describedby="f3sid-helper">
                                     <input v-model="f3sid" name="f3sid" class="!h-10" />
                                     <button type="submit" @click.prevent="onClickScan"
                                         class="flex items-center justify-center !size-10 !p-0">
@@ -283,7 +288,7 @@ onMounted(() => {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="food in foodStore.counts">
+                                <tr v-for="food in foodStore.counts" v-bind:key="food.id">
                                     <th scope="row" class="text-sm">{{ food.name }}</th>
                                     <td>
                                         {{
@@ -353,7 +358,7 @@ onMounted(() => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="food in foodStore.table">
+                            <tr v-for="food in foodStore.table" v-bind:key="food.f3sid + food.created_at">
                                 <th scope="row">{{ food.f3sid }}</th>
                                 <td v-if="editingFoods.get(food.id)">
                                     <select :disabled="editIsLoading" name="newFoodId" v-model="newFoodId"

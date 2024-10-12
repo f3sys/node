@@ -1,84 +1,34 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useNodeStore } from '../stores/node';
+import { ref } from 'vue'
+import { useNodeStore } from '../stores/node'
+import { type DetectedBarcode } from 'barcode-detector'
+import { QrcodeStream } from 'vue-qrcode-reader'
 
-const nodeStore = useNodeStore();
-// const foodStore = useFoodStore();
-// const exhibitionStore = useExhibitionStore();
-// const entryStore = useEntryStore();
+const nodeStore = useNodeStore()
 
-const loading = ref(false);
-const buttonValue = ref("Login");
+const otp = ref("")
 
-function toggleButton() {
-    buttonValue.value = buttonValue.value === "Login" ? "Loading..." : "Login";
-    loading.value = !loading.value;
+const loading = ref(false)
+const isScannerVisible = ref(false)
+const buttonValue = ref("Login")
+
+function toggleButtonAndScanner() {
+    buttonValue.value = buttonValue.value === "Login" ? "Loading..." : "Login"
+    loading.value = !loading.value
+    isScannerVisible.value = isScannerVisible.value ? false : true
+}
+
+const onDetect = async ([firstDetectedCode]: DetectedBarcode[]) => {
+    otp.value = firstDetectedCode.rawValue
+    isScannerVisible.value = false
+    if (await nodeStore.sendOTP(otp.value)) {
+        await nodeStore.getNode()
+    }
+    window.location.reload()
 }
 
 async function onSubmit() {
-    toggleButton()
-    if (nodeStore.key === "" && await nodeStore.setKey()) {
-        await nodeStore.getNode();
-    }
-    window.location.reload()
-    // switch (nodeStore.type) {
-    //     case "FOODSTALL":
-    //         // foodStore.clear();
-
-    //         // switch (nodeStore.isReview) {
-    //         //     case true:
-    //         // await Promise.all([
-    //         //     foodStore.getFoods(),
-    //         //     foodStore.getTable(),
-    //         //     foodStore.getFoodCount(),
-    //         //     foodStore.getData()
-    //         // ]);
-
-    //         // window.location.reload()
-    //         // break;
-    //         // case false:
-    //         // await Promise.all([
-    //         //     foodStore.getFoods(),
-    //         //     foodStore.getTable(),
-    //         //     foodStore.getFoodCount(),
-    //         //     foodStore.getData()
-    //         // ]);
-
-    //         window.location.reload()
-    //         break;
-    //     // }
-    //     // break;
-    //     case "EXHIBITION":
-    //         // exhibitionStore.clear();
-
-    //         // switch (nodeStore.isReview) {
-    //         // case true:
-    //         //     window.location.reload()
-    //         //     break;
-    //         // case false:
-    //         // await Promise.all([
-    //         //     exhibitionStore.getTable(),
-    //         //     exhibitionStore.getCount(),
-    //         // ]);
-
-    //         window.location.reload()
-    //         break;
-    //     // }
-    //     // break;
-    //     case "ENTRY":
-    //         // entryStore.clear();
-
-    //         // await Promise.all([
-    //         //     entryStore.getTable(),
-    //         //     entryStore.getCount(),
-    //         //     entryStore.getEntryCount()
-    //         // ]);
-
-    //         window.location.reload()
-    //         break;
-    //     default:
-    // break;
-    // }
+    toggleButtonAndScanner()
 }
 </script>
 
@@ -102,5 +52,21 @@ async function onSubmit() {
                 </button>
             </form>
         </article>
+        <dialog :open="isScannerVisible">
+            <article class="max-w-lg">
+                <header>
+                    <hgroup style="margin-bottom: 0px">
+                        <h2>F3SiD</h2>
+                        <p>Scan the F3SiD</p>
+                    </hgroup>
+                </header>
+                <QrcodeStream :paused="!isScannerVisible" @detect="onDetect" />
+                <footer>
+                    <button @click="toggleButtonAndScanner()" class="secondary">
+                        Close
+                    </button>
+                </footer>
+            </article>
+        </dialog>
     </main>
 </template>

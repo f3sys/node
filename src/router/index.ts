@@ -24,6 +24,11 @@ const router = createRouter({
             name: "entry",
             component: () => import('../views/EntryView.vue'),
         },
+        {
+            path: "/battery",
+            name: "battery",
+            component: () => import('../views/BatteryView.vue'),
+        }
     ]
 })
 
@@ -52,6 +57,12 @@ router.beforeEach((to, _, next) => {
                 next(); // Proceed if already on entry page
             }
             break;
+        case "BATTERY":
+            if (to.name !== "battery") {
+                next("/battery"); // Redirect to battery if not already there
+            } else {
+                next(); // Proceed if already on battery page
+            }
         default:
             if (to.name !== "login") {
                 next("/login"); // Redirect to login if not already there

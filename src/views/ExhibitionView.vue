@@ -3,6 +3,7 @@ import { type DetectedBarcode } from "barcode-detector/pure";
 import { ArcElement, CategoryScale, Chart as ChartJS, Colors, Legend, LinearScale, LineElement, PointElement, Tooltip } from 'chart.js';
 import { ScanQrCode, Send } from "lucide-vue-next";
 import Sqids from "sqids";
+import { useBattery, useIntervalFn } from '@vueuse/core';
 import { onMounted, ref } from 'vue';
 import { Line } from "vue-chartjs";
 import { QrcodeStream } from 'vue-qrcode-reader';
@@ -67,7 +68,7 @@ const onSubmit = async () => {
     isLoading.value = false;
 }
 
-let lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
+const lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
     if (i % 2 === 0) {
         acc.push((i / 2 + 8).toString().padStart(2, '0') + ":00");
     } else {
@@ -76,10 +77,19 @@ let lineLabels = Array(MAX_LABELS).fill(0).reduce((acc, _, i) => {
     return acc;
 }, []);
 
+const { charging, chargingTime, dischargingTime, level } = useBattery()
+
+const { resume, isActive } = useIntervalFn(async () => {
+    await nodeStore.sendStatus(charging.value, chargingTime.value, dischargingTime.value, level.value)
+}, 60000, { immediate: false }) // 1 minute
+
 onMounted(() => {
     (async () => {
         await exhibitionStore.update()
     })()
+
+    if (!isActive.value && nodeStore.canSendStatus)
+        resume()
 })
 </script>
 
@@ -99,8 +109,9 @@ onMounted(() => {
                         <fieldset :disabled="isLoading">
                             <label>
                                 F3SiD
-                                <fieldset role="group" style="margin-top: calc(var(--pico-spacing) * .25)"
-                                    :aria-invalid="f3sidInvalid" aria-describedby="f3sid-helper">
+                                <fieldset v-on:keydown.enter.prevent role="group"
+                                    style="margin-top: calc(var(--pico-spacing) * .25)" :aria-invalid="f3sidInvalid"
+                                    aria-describedby="f3sid-helper">
                                     <input v-model="f3sid" name="f3sid" class="!h-10" />
                                     <button type="submit" @click.prevent="onClickScan"
                                         class="flex items-center justify-center !size-10 !p-0">
@@ -167,7 +178,8 @@ onMounted(() => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="exhibition in exhibitionStore.table">
+                            <tr v-for="exhibition in exhibitionStore.table"
+                                v-bind:key="exhibition.f3sid + exhibition.created_at">
                                 <th scope="row">{{ exhibition.f3sid }}</th>
                                 <td>{{ new Date(exhibition.created_at).toLocaleTimeString("ja-JP") }}</td>
                             </tr>

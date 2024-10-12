@@ -41,7 +41,7 @@ export const useEntryStore = defineStore("entry", () => {
             });
 
             return data.ok
-        } catch (e) {
+        } catch {
             return false
         }
     }
@@ -60,7 +60,7 @@ export const useEntryStore = defineStore("entry", () => {
             table.value = data
 
             return true
-        } catch (e) {
+        } catch {
             return false
         }
     }
@@ -79,7 +79,7 @@ export const useEntryStore = defineStore("entry", () => {
             count.value = data.count
 
             return true
-        } catch (e) {
+        } catch {
             return false
         }
     }
@@ -98,7 +98,7 @@ export const useEntryStore = defineStore("entry", () => {
             counts.value = data
 
             return true
-        } catch (e) {
+        } catch {
             return false
         }
     }
@@ -117,7 +117,7 @@ export const useEntryStore = defineStore("entry", () => {
             line_graph_data.value = data;
 
             return true
-        } catch (e) {
+        } catch {
             return false
         }
     }
