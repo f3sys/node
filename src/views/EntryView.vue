@@ -112,13 +112,12 @@ onMounted(() => {
                             </p>
                         </hgroup>
                     </header>
-                    <form @submit.prevent="onSubmit">
+                    <form v-on:keydown.enter.prevent @submit.prevent="onSubmit">
                         <fieldset :disabled="isLoading">
                             <label>
                                 F3SiD
-                                <fieldset v-on:keydown.enter.prevent role="group"
-                                    style="margin-top: calc(var(--pico-spacing) * .25)" :aria-invalid="f3sidInvalid"
-                                    aria-describedby="f3sid-helper">
+                                <fieldset role="group" style="margin-top: calc(var(--pico-spacing) * .25)"
+                                    :aria-invalid="f3sidInvalid" aria-describedby="f3sid-helper">
                                     <input v-model="f3sid" name="f3sid" class="!h-10" />
                                     <button type="submit" @click.prevent="onClickScan"
                                         class="flex items-center justify-center !size-10 !p-0">
