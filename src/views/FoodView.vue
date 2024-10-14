@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { type DetectedBarcode } from "barcode-detector/pure";
 import { ArcElement, CategoryScale, Chart as ChartJS, Colors, Legend, LinearScale, LineElement, PointElement, Tooltip } from 'chart.js';
 import { Check, Pencil, ScanQrCode, Send, X } from "lucide-vue-next";
 import { useBattery, useIntervalFn } from '@vueuse/core';
 import Sqids from "sqids";
 import { computed, onMounted, ref } from 'vue';
 import { Doughnut, Line } from "vue-chartjs";
-import { QrcodeStream } from 'vue-qrcode-reader';
 import { useFoodStore } from '../stores/food';
 import { useNodeStore } from '../stores/node';
+import ScannerComponent from '@/components/ScannerComponent.vue';
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Colors)
 
 const BORDER_COLORS = [
@@ -68,7 +67,7 @@ const price = computed(() => {
         .toLocaleString("ja-JP", { style: "currency", currency: "JPY" });
 });
 
-const onDetect = async ([firstDetectedCode]: DetectedBarcode[]) => {
+const onDetect = async (firstDetectedCode: DetectedBarcode) => {
     if (sqids.decode(firstDetectedCode.rawValue).length !== 2) return;
     f3sid.value = firstDetectedCode.rawValue;
     isF3SiDScanned.value = true;
@@ -493,22 +492,7 @@ onMounted(() => {
                 </article>
             </div>
         </div>
-        <dialog :open="isScannerVisible">
-            <article class="max-w-lg">
-                <header>
-                    <hgroup style="margin-bottom: 0px;">
-                        <h2>F3SiD</h2>
-                        <p>Scan the F3SiD</p>
-                    </hgroup>
-                </header>
-                <QrcodeStream :paused="!isScannerVisible" @detect="onDetect" />
-                <footer>
-                    <button @click="isScannerVisible = isScannerVisible ? false : true;" class="secondary">
-                        Close
-                    </button>
-                </footer>
-            </article>
-        </dialog>
+        <ScannerComponent v-model="isScannerVisible" @onDetect="onDetect" />
     </main>
 </template>
 
