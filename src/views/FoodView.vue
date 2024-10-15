@@ -2,12 +2,12 @@
 import { ArcElement, CategoryScale, Chart as ChartJS, Colors, Legend, LinearScale, LineElement, PointElement, Tooltip } from 'chart.js';
 import { Check, Pencil, ScanQrCode, Send, X } from "lucide-vue-next";
 import { useBattery, useIntervalFn } from '@vueuse/core';
-import Sqids from "sqids";
 import { computed, onMounted, ref } from 'vue';
 import { Doughnut, Line } from "vue-chartjs";
 import { useFoodStore } from '../stores/food';
 import { useNodeStore } from '../stores/node';
 import ScannerComponent from '@/components/ScannerComponent.vue';
+import { newSqids } from '@/utils/sqids';
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Colors)
 
 const BORDER_COLORS = [
@@ -41,11 +41,7 @@ const f3sid = ref("")
 const f3sidInvalid = ref(false)
 const foodInvalid = ref(false)
 
-const sqids = new Sqids({
-    minLength: 7,
-    alphabet: '23456789CFGHJMPQRVWX',
-    blocklist: new Set([])
-})
+const sqids = newSqids();
 
 const editingFoods = ref(new Map<number, boolean>(
     foodStore.table.map(food => [food.id, false])

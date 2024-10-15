@@ -2,13 +2,13 @@
 import { type DetectedBarcode } from "barcode-detector/pure";
 import { ArcElement, CategoryScale, Chart as ChartJS, Colors, Legend, LinearScale, LineElement, PointElement, Tooltip } from 'chart.js';
 import { ScanQrCode, Send } from "lucide-vue-next";
-import Sqids from "sqids";
 import { useBattery, useIntervalFn } from "@vueuse/core";
 import { computed, onMounted, ref } from 'vue';
 import { Doughnut, Line } from "vue-chartjs";
 import { useEntryStore } from "../stores/entry";
 import { useNodeStore } from '../stores/node';
 import ScannerComponent from "@/components/ScannerComponent.vue";
+import { newSqids } from "@/utils/sqids";
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Colors)
 const MAX_LABELS = 21
 
@@ -24,11 +24,7 @@ const f3sid = ref("")
 
 const f3sidInvalid = ref(false)
 
-const sqids = new Sqids({
-    minLength: 7,
-    alphabet: '23456789CFGHJMPQRVWX',
-    blocklist: new Set([])
-})
+const sqids = newSqids()
 
 const onDetect = async (firstDetectedCode: DetectedBarcode) => {
     if (sqids.decode(firstDetectedCode.rawValue).length !== 2) return;
