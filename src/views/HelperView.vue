@@ -1,14 +1,10 @@
 <script setup lang="ts">
 import { QrcodeStream } from 'vue-qrcode-reader';
-import Sqids from 'sqids';
 import { computed, ref } from 'vue';
 import { type DetectedBarcode } from "barcode-detector";
+import { newSqids, } from '@/utils/sqids';
 
-const sqids = new Sqids({
-    minLength: 7,
-    alphabet: '23456789CFGHJMPQRVWX',
-    blocklist: new Set([])
-})
+const sqids = newSqids();
 
 const f3sid = ref<string>('962C7JF');
 const id = computed(() => sqids.decode(f3sid.value)[0]);
@@ -16,7 +12,7 @@ const rand = computed(() => sqids.decode(f3sid.value)[1]);
 const junior_grade_list = ["A", "B", "C", "D", "E"];
 const senior_grade_list = ["E", "A", "B", "C", "D"];
 const grade = ref<number>(0);
-const class_ = ref<string>('A');
+const class_ = ref<string>('');
 
 const onDetect = async ([firstDetectedCode]: DetectedBarcode[]) => {
     const decoded = sqids.decode(firstDetectedCode.rawValue);
@@ -29,10 +25,18 @@ const onDetect = async ([firstDetectedCode]: DetectedBarcode[]) => {
     }).then((r) => r.json());
 
     grade.value = data.grade;
-    if (grade.value >= 10)
+    if (grade.value >= 10) {
+        // Senior
         class_.value = senior_grade_list[data.class]
-    else
+    }
+    else if (grade.value == 0) {
+        // Teacher
+        class_.value = "N/A"
+    }
+    else {
+        // Junior
         class_.value = junior_grade_list[data.class]
+    }
 }
 </script>
 
