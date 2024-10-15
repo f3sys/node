@@ -2,12 +2,7 @@
 import { QrcodeStream } from 'vue-qrcode-reader';
 import Sqids from 'sqids';
 import { computed, ref } from 'vue';
-import { useNodeStore } from '@/stores/node';
 import { type DetectedBarcode } from "barcode-detector";
-
-const nodeStore = useNodeStore()
-const headers = new Headers();
-headers.append("Authorization", "Bearer " + nodeStore.key);
 
 const sqids = new Sqids({
     minLength: 7,
@@ -18,7 +13,7 @@ const sqids = new Sqids({
 const f3sid = ref<string>('962C7JF');
 const id = computed(() => sqids.decode(f3sid.value)[0]);
 const rand = computed(() => sqids.decode(f3sid.value)[1]);
-const junior_grade_list = ["A", "B", "C", "D", "E", "F"];
+const junior_grade_list = ["A", "B", "C", "D", "E"];
 const senior_grade_list = ["E", "A", "B", "C", "D"];
 const grade = ref<number>(0);
 const class_ = ref<string>('A');
@@ -31,7 +26,6 @@ const onDetect = async ([firstDetectedCode]: DetectedBarcode[]) => {
     const url = import.meta.env.VITE_API_URL;
     const data = await fetch(url + "visitor/" + f3sid.value, {
         method: "GET",
-        headers: headers,
     }).then((r) => r.json());
 
     grade.value = data.grade;
