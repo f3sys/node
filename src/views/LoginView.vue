@@ -1,34 +1,20 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useNodeStore } from '../stores/node'
-import { type DetectedBarcode } from 'barcode-detector'
-import { QrcodeStream } from 'vue-qrcode-reader'
 
 const nodeStore = useNodeStore()
 
 const otp = ref("")
-
 const loading = ref(false)
-const isScannerVisible = ref(false)
 const buttonValue = ref("Login")
 
-function toggleButtonAndScanner() {
-    buttonValue.value = buttonValue.value === "Login" ? "Loading..." : "Login"
-    loading.value = !loading.value
-    isScannerVisible.value = isScannerVisible.value ? false : true
-}
-
-const onDetect = async ([firstDetectedCode]: DetectedBarcode[]) => {
-    otp.value = firstDetectedCode.rawValue
-    isScannerVisible.value = false
-    if (await nodeStore.sendOTP(otp.value)) {
-        await nodeStore.getNode()
-    }
-    window.location.reload()
-}
-
 async function onSubmit() {
-    toggleButtonAndScanner()
+    buttonValue.value = "Loading..."
+    loading.value = !loading.value
+    if (await nodeStore.sendOTP(otp.value))
+        await nodeStore.getNode()
+
+    window.location.reload()
 }
 </script>
 
@@ -38,12 +24,8 @@ async function onSubmit() {
             <form @submit.prevent="onSubmit">
                 <fieldset>
                     <label>
-                        Name
-                        <input :value="nodeStore.name" :disabled="loading" name="name" readonly />
-                    </label>
-                    <label>
-                        Type
-                        <input :value="nodeStore.type" :disabled="loading" name="type" readonly />
+                        OTP
+                        <input v-model="otp" :aria-busy="loading" :disabled="loading" name="otp" />
                     </label>
                 </fieldset>
 
@@ -52,7 +34,7 @@ async function onSubmit() {
                 </button>
             </form>
         </article>
-        <dialog :open="isScannerVisible">
+        <!-- <dialog :open="isScannerVisible">
             <article class="max-w-lg">
                 <header>
                     <hgroup style="margin-bottom: 0px">
@@ -67,6 +49,6 @@ async function onSubmit() {
                     </button>
                 </footer>
             </article>
-        </dialog>
+        </dialog> -->
     </main>
 </template>
