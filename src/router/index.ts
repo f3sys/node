@@ -28,11 +28,19 @@ const router = createRouter({
             path: "/battery",
             name: "battery",
             component: () => import('../views/BatteryView.vue'),
+        },
+        {
+            path: "/helper",
+            name: "helper",
+            component: () => import('../views/HelperView.vue'),
         }
     ]
 })
 
 router.beforeEach((to, _, next) => {
+    if (to.name === "helper")
+        return next();
+
     const nodeStore = useNodeStore();
 
     switch (nodeStore.type) {
