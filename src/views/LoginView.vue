@@ -2,9 +2,6 @@
 import { ref } from 'vue'
 import { useNodeStore } from '../stores/node'
 import ScannerComponent from '@/components/ScannerComponent.vue';
-import { newSqids } from '@/utils/sqids';
-
-const sqids = newSqids()
 
 const nodeStore = useNodeStore()
 
@@ -13,9 +10,9 @@ const loading = ref(false)
 const buttonValue = ref("Login")
 
 const onDetect = async (firstDetectedCode: DetectedBarcode) => {
-    const decoded = sqids.decode(firstDetectedCode.rawValue)
-    if (decoded.length !== 2)
-        window.location.reload()
+    // const decoded = sqids.decode(firstDetectedCode.rawValue)
+    // if (decoded.length !== 2)
+    //     window.location.reload()
 
     otp.value = firstDetectedCode.rawValue
 
