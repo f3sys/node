@@ -33,8 +33,8 @@ onMounted(() => {
                 <tr v-for="battery in batteryStore.table" v-bind:key="battery.node_id">
                     <th scope="row">{{ battery.node_name }}</th>
                     <td>{{ battery.charging ? "充電中" : "充電していません" }}</td>
-                    <td>{{ (battery.charging_time / 3600).toFixed(2) }} 分</td>
-                    <td>{{ (battery.discharging_time / 3600).toFixed(2) }} 分</td>
+                    <td>{{ (battery.charging_time / 3600).toFixed(2) }} 時間</td>
+                    <td>{{ (battery.discharging_time / 3600).toFixed(2) }} 時間</td>
                     <td>{{ battery.level }}</td>
                 </tr>
             </tbody>
