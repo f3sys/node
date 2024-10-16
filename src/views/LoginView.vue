@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useNodeStore } from '../stores/node'
+import ScannerComponent from '@/components/ScannerComponent.vue';
+import { newSqids } from '@/utils/sqids';
+
+const sqids = newSqids()
 
 const nodeStore = useNodeStore()
 
@@ -8,13 +12,27 @@ const otp = ref("")
 const loading = ref(false)
 const buttonValue = ref("Login")
 
-async function onSubmit() {
-    buttonValue.value = "Loading..."
-    loading.value = !loading.value
+const onDetect = async (firstDetectedCode: DetectedBarcode) => {
+    const decoded = sqids.decode(firstDetectedCode.rawValue)
+    if (decoded.length !== 2)
+        window.location.reload()
+
+    otp.value = firstDetectedCode.rawValue
+
     if (await nodeStore.sendOTP(otp.value))
         await nodeStore.getNode()
 
     window.location.reload()
+    // await onSubmit()
+}
+
+async function onSubmit() {
+    buttonValue.value = "Loading..."
+    loading.value = !loading.value
+    // if (await nodeStore.sendOTP(otp.value))
+    //     await nodeStore.getNode()
+
+    // window.location.reload()
 }
 </script>
 
@@ -34,21 +52,6 @@ async function onSubmit() {
                 </button>
             </form>
         </article>
-        <!-- <dialog :open="isScannerVisible">
-            <article class="max-w-lg">
-                <header>
-                    <hgroup style="margin-bottom: 0px">
-                        <h2>F3SiD</h2>
-                        <p>Scan the F3SiD</p>
-                    </hgroup>
-                </header>
-                <QrcodeStream :paused="!isScannerVisible" @detect="onDetect" />
-                <footer>
-                    <button @click="toggleButtonAndScanner()" class="secondary">
-                        Close
-                    </button>
-                </footer>
-            </article>
-        </dialog> -->
+        <ScannerComponent v-model="loading" @onDetect="onDetect" />
     </main>
 </template>
