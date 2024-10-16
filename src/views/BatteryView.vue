@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import { useBatteryStore } from '@/stores/battery';
+import { useIntervalFn } from '@vueuse/core';
 import { onMounted } from 'vue';
 
 const batteryStore = useBatteryStore()
+
+const { } = useIntervalFn(async () => {
+    // await nodeStore.sendStatus(charging.value, chargingTime.value, dischargingTime.value, level.value)
+    await batteryStore.update()
+}, 60000, { immediate: true })
 
 onMounted(() => {
     (async () => {
@@ -26,13 +32,9 @@ onMounted(() => {
             <tbody>
                 <tr v-for="battery in batteryStore.table" v-bind:key="battery.node_id">
                     <th scope="row">{{ battery.node_name }}</th>
-                    <!-- <td>true</td>
-                    <td>1000</td>
-                    <td>Infinity</td>
-                    <td>0.8</td> -->
                     <td>{{ battery.charging ? "充電中" : "充電していません" }}</td>
-                    <td>{{ battery.charging_time }}</td>
-                    <td>{{ battery.discharging_time }}</td>
+                    <td>{{ (battery.charging_time / 3600).toFixed(2) }} 分</td>
+                    <td>{{ (battery.discharging_time / 3600).toFixed(2) }} 分</td>
                     <td>{{ battery.level }}</td>
                 </tr>
             </tbody>
