@@ -38,9 +38,6 @@ const router = createRouter({
 })
 
 router.beforeEach((to, _, next) => {
-    if (to.name === "helper")
-        return next();
-
     const nodeStore = useNodeStore();
 
     switch (nodeStore.type) {
@@ -71,6 +68,7 @@ router.beforeEach((to, _, next) => {
             } else {
                 next(); // Proceed if already on battery page
             }
+            break;
         default:
             if (to.name !== "login") {
                 next("/login"); // Redirect to login if not already there
