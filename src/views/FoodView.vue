@@ -21,7 +21,11 @@ const BORDER_COLORS = [
 ];
 const MAX_LABELS = 21;
 
-const total_price = ref("")
+// const total_price = ref("")
+
+const total_price = computed(() => {
+    return foodStore.counts.reduce((acc, food) => acc + food.price * food.count, 0).toLocaleString("ja-JP", { style: "currency", currency: "JPY" });
+});
 
 const nodeStore = useNodeStore()
 const foodStore = useFoodStore()
@@ -160,6 +164,18 @@ const onSubmit = async () => {
 const donutLabels = computed(() =>
     foodStore.counts.map(food => food.name)
 );
+
+const groupedFoodsByDate = computed(() => {
+    return foodStore.counts.reduce((acc, food) => {
+        const date = food.date;
+        if (!acc[date]) {
+            acc[date] = [];
+        }
+        acc[date].push(food);
+        return acc;
+    }, {} as Record<string, typeof foodStore.counts>);
+});
+
 const donutCountDatas = computed(() =>
     foodStore.counts.map(food => food.count)
 );
@@ -182,12 +198,13 @@ const { resume, isActive } = useIntervalFn(async () => {
     await nodeStore.sendStatus(charging.value, chargingTime.value, dischargingTime.value, level.value)
 }, 60000, { immediate: false }) // 1 minute
 
+
 onMounted(() => {
     (async () => {
         await foodStore.getFoods()
         await foodStore.update()
 
-        total_price.value = foodStore.counts.reduce((acc, food) => acc + food.price * food.count, 0).toLocaleString("ja-JP", { style: "currency", currency: "JPY" });
+        // total_price.value = foodStore.counts.reduce((acc, food) => acc + food.price * food.count, 0).toLocaleString("ja-JP", { style: "currency", currency: "JPY" });
 
         selectedFoods.value = new Map(foodStore.foods.map(food => [
             food.id,
@@ -277,64 +294,144 @@ onMounted(() => {
                         </hgroup>
                     </header>
                     <div>
-                        <table class="striped mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">商品名</th>
-                                    <th scope="col">値段</th>
-                                    <th scope="col">回数</th>
-                                    <th scope="col">個数</th>
-                                    <th scope="col">総額</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="food in foodStore.counts" v-bind:key="food.id">
-                                    <th scope="row" class="text-sm">{{ food.name }}</th>
-                                    <td>
-                                        {{
-                                            food.price.toLocaleString("ja-JP", {
-                                                style: "currency",
-                                                currency: "JPY"
-                                            })
-                                        }}
-                                    </td>
-                                    <td>
-                                        {{ food.count }}
-                                    </td>
-                                    <td>
-                                        {{ food.quantity }}
-                                    </td>
-                                    <td>
-                                        {{
-                                            (food.count * food.price).toLocaleString("ja-JP", {
-                                                style: "currency",
-                                                currency: "JPY"
-                                            })
-                                        }}
-                                    </td>
-                                </tr>
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <th scope="row" colspan="2" class="text-align-center">合計</th>
-                                    <td>
-                                        {{
-                                            foodStore.count
-                                        }}
-                                    </td>
-                                    <td>
-                                        {{
-                                            foodStore.quantity
-                                        }}
-                                    </td>
-                                    <td>
-                                        {{
-                                            total_price
-                                        }}
-                                    </td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                        <template v-for="(foods, date) in groupedFoodsByDate" :key="date">
+                            <hroup>
+                                <h3>{{ date + "日" }}</h3>
+                            </hroup>
+                            <table class="striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">商品名</th>
+                                        <th scope="col">値段</th>
+                                        <th scope="col">回数</th>
+                                        <th scope="col">個数</th>
+                                        <th scope="col">総額</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="food in foods" v-bind:key="food.id">
+                                        <th scope="row" class="text-sm">{{ food.name }}</th>
+                                        <td>
+                                            {{
+                                                food.price.toLocaleString("ja-JP", {
+                                                    style: "currency",
+                                                    currency: "JPY"
+                                                })
+                                            }}
+                                        </td>
+                                        <td>
+                                            {{ food.count }}
+                                        </td>
+                                        <td>
+                                            {{ food.quantity }}
+                                        </td>
+                                        <td>
+                                            {{
+                                                (food.count * food.price).toLocaleString("ja-JP", {
+                                                    style: "currency",
+                                                    currency: "JPY"
+                                                })
+                                            }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th scope="row" colspan="2" class="text-align-center">合計</th>
+                                        <td>
+                                            {{
+                                                foods.reduce((acc, food) => acc + food.count, 0)
+                                            }}
+                                        </td>
+                                        <td>
+                                            {{
+                                                foods.reduce((acc, food) => acc + food.quantity, 0)
+                                            }}
+                                        </td>
+                                        <td>
+                                            {{
+                                                foods.reduce((acc, food) => acc + (food.count * food.price),
+                                                    0).toLocaleString("ja-JP", {
+                                                        style: "currency",
+                                                        currency: "JPY"
+                                                    })
+                                            }}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                            <hr class="mt-0" />
+                        </template>
+                        <template v-if="Object.keys(groupedFoodsByDate).length > 1">
+                            <hgroup>
+                                <h3>合計</h3>
+                            </hgroup>
+                            <table class="stripped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">商品名</th>
+                                        <th scope="col">日付</th>
+                                        <th scope="col">値段</th>
+                                        <th scope="col">回数</th>
+                                        <th scope="col">個数</th>
+                                        <th scope="col">総額</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="food in foodStore.counts" v-bind:key="food.id">
+                                        <th scope="row" class="text-sm">{{ food.name }}</th>
+                                        <td>
+                                            {{ food.date }}
+                                        </td>
+                                        <td>
+                                            {{
+                                                food.price.toLocaleString("ja-JP", {
+                                                    style: "currency",
+                                                    currency: "JPY"
+                                                })
+                                            }}
+                                        </td>
+                                        <td>
+                                            {{ food.count }}
+                                        </td>
+                                        <td>
+                                            {{ food.quantity }}
+                                        </td>
+                                        <td>
+                                            {{
+                                                (food.count * food.price).toLocaleString("ja-JP", {
+                                                    style: "currency",
+                                                    currency: "JPY"
+                                                })
+                                            }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th scope="row" colspan="3" class="text-align-center">
+                                            合計
+                                        </th>
+                                        <td>
+                                            {{
+                                                foodStore.count
+                                            }}
+                                        </td>
+                                        <td>
+                                            {{
+                                                foodStore.quantity
+                                            }}
+                                        </td>
+                                        <td>
+                                            {{
+                                                total_price
+                                            }}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                            <hr class="m-0" />
+                        </template>
                     </div>
                 </article>
             </div>

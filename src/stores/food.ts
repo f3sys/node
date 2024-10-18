@@ -8,7 +8,7 @@ export const useFoodStore = defineStore("food", () => {
     const foods = ref<Array<{ id: number, name: string, price: number, quantity: number }>>([])
     const quantity = ref<number>(0)
     const count = ref<number>(0)
-    const counts = ref<Array<{ id: number, name: string, count: number, quantity: number, price: number }>>([])
+    const counts = ref<Array<{ id: number, date: number, name: string, count: number, quantity: number, price: number }>>([])
     const table = ref<Array<{ id: number, f3sid: string, food_id: number, food_name: string, quantity: number, price: number, created_at: string }>>([])
     const line_graph_data = ref<Array<{ label: string, data: number[] }>>([])
 
@@ -141,6 +141,8 @@ export const useFoodStore = defineStore("food", () => {
             }).then((r) => r.json())
 
             counts.value = data
+
+            counts.value = counts.value.filter((item) => item.count > 0)
 
             return true
         } catch {
