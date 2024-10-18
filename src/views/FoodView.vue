@@ -187,7 +187,7 @@ onMounted(() => {
         await foodStore.getFoods()
         await foodStore.update()
 
-        total_price.value = foodStore.counts.reduce((acc, food) => acc + food.price * food.quantity, 0).toLocaleString("ja-JP", { style: "currency", currency: "JPY" });
+        total_price.value = foodStore.counts.reduce((acc, food) => acc + food.price * food.count, 0).toLocaleString("ja-JP", { style: "currency", currency: "JPY" });
 
         selectedFoods.value = new Map(foodStore.foods.map(food => [
             food.id,
@@ -306,7 +306,7 @@ onMounted(() => {
                                     </td>
                                     <td>
                                         {{
-                                            (food.quantity * food.price).toLocaleString("ja-JP", {
+                                            (food.count * food.price).toLocaleString("ja-JP", {
                                                 style: "currency",
                                                 currency: "JPY"
                                             })
